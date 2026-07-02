@@ -1,0 +1,49 @@
+/* Audit Progress Tracker — KAP KBS */
+
+.login-wrap {
+  background: linear-gradient(135deg, #0d6efd 0%, #083b8c 100%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  border: none;
+  border-radius: 1rem;
+}
+
+.client-card {
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.client-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .12) !important;
+}
+
+.task-table th {
+  white-space: nowrap;
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+.task-table td {
+  vertical-align: middle;
+}
+
+.task-final {
+  background-color: #f0faf3;
+}
+
+.task-final td {
+  opacity: .85;
+}
+
+.btn-group-vertical .btn {
+  white-space: nowrap;
+  font-size: .78rem;
+}
+
+#main-tabs .nav-link {
+  cursor: pointer;
+}
