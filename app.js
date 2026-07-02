@@ -274,7 +274,7 @@ async function renderTasks(clientId) {
         </small>
       </div>
       <small class="text-muted">
-        Manager: ${esc(data.team.manager || '-')} · Ketua: ${esc(data.team.ketua || '-')}
+        Manager: ${esc(data.team.manager.nama || '-')} · Ketua: ${esc(data.team.ketua.nama || '-')}
       </small>
     </div>
     ${Object.keys(grouped).map(tahapan => grouped[tahapan].length ? `
@@ -298,6 +298,20 @@ async function renderTasks(clientId) {
       </div>` : '').join('')}`;
 }
 
+// Nama user dari email, berdasarkan data tim klien yang sedang dibuka.
+function nameFor(email) {
+  const e = String(email || '').toLowerCase();
+  if (!e) return '-';
+  const team = currentTaskData ? currentTaskData.team : null;
+  if (team) {
+    const all = [team.manager, team.ketua, ...team.anggota];
+    for (const m of all) {
+      if (m && m.email === e) return m.nama;
+    }
+  }
+  return e;
+}
+
 function taskRow(t) {
   const final = t.Status_Review_Manager === 'Approved';
   const catatan = t.Catatan
@@ -311,7 +325,7 @@ function taskRow(t) {
         </div>
         ${catatan}
       </td>
-      <td class="small">${esc(t.Ditugaskan_Ke_Email || '-')}</td>
+      <td class="small">${esc(nameFor(t.Ditugaskan_Ke_Email))}</td>
       <td>${statusBadge(t.Status_Pekerjaan)}</td>
       <td>${reviewBadge(t.Status_Review_Ketua)}</td>
       <td>${reviewBadge(t.Status_Review_Manager)}</td>
@@ -347,15 +361,22 @@ function taskActions(t) {
     }
   }
 
-  // Ketua: review task anggota
-  if ((role === 'Ketua' || isAdmin) && t.Status_Review_Ketua === 'Menunggu Review') {
-    btns.push(`<button class="btn btn-success" onclick="review('${id}','ketua','Approved')">
-      <i class="bi bi-hand-thumbs-up"></i> Approve (Ketua)</button>`);
-    btns.push(`<button class="btn btn-outline-danger" onclick="openReject('${id}','ketua','${esc(t.Nama_Pekerjaan)}')">
-      <i class="bi bi-hand-thumbs-down"></i> Reject (Ketua)</button>`);
+  // Ketua: membagi pekerjaan ke anggota tim + review task anggota
+  if (role === 'Ketua' || isAdmin) {
+    if (t.Status_Review_Ketua === 'Menunggu Review') {
+      btns.push(`<button class="btn btn-success" onclick="review('${id}','ketua','Approved')">
+        <i class="bi bi-hand-thumbs-up"></i> Approve (Ketua)</button>`);
+      btns.push(`<button class="btn btn-outline-danger" onclick="openReject('${id}','ketua','${esc(t.Nama_Pekerjaan)}')">
+        <i class="bi bi-hand-thumbs-down"></i> Reject (Ketua)</button>`);
+    }
+    if (!final) {
+      btns.push(`<button class="btn btn-outline-primary"
+        onclick="openAssign('${id}','${esc(t.Ditugaskan_Ke_Email || '')}','${esc(t.Due_Date || '')}','${esc(t.Nama_Pekerjaan)}')">
+        <i class="bi bi-person-plus"></i> Tugaskan</button>`);
+    }
   }
 
-  // Manager: review setelah Ketua approve
+  // Manager: hanya review setelah Ketua approve (tidak menugaskan task)
   if (role === 'Manager' || isAdmin) {
     if (t.Status_Review_Ketua === 'Approved' && t.Status_Review_Manager === 'Menunggu Review') {
       btns.push(`<button class="btn btn-success" onclick="review('${id}','manager','Approved')">
@@ -366,11 +387,6 @@ function taskActions(t) {
     if (final) {
       btns.push(`<button class="btn btn-outline-danger" onclick="openReject('${id}','manager','${esc(t.Nama_Pekerjaan)}')">
         <i class="bi bi-unlock"></i> Buka Kembali</button>`);
-    }
-    if (!final) {
-      btns.push(`<button class="btn btn-outline-primary"
-        onclick="openAssign('${id}','${esc(t.Ditugaskan_Ke_Email || '')}','${esc(t.Due_Date || '')}','${esc(t.Nama_Pekerjaan)}')">
-        <i class="bi bi-person-plus"></i> Tugaskan</button>`);
     }
   }
 
@@ -407,10 +423,10 @@ function openAssign(taskId, currentEmail, currentDue, taskName) {
   $('#assign-task-name').textContent = taskName;
   const team = currentTaskData.team;
   const options = ['<option value="">— (belum ditugaskan) —</option>'];
-  const all = [team.ketua, ...team.anggota].filter(Boolean);
-  all.forEach(e => {
-    const sel = e === (currentEmail || '').toLowerCase() ? 'selected' : '';
-    options.push(`<option value="${esc(e)}" ${sel}>${esc(e)}${e === team.ketua ? ' (Ketua)' : ''}</option>`);
+  const all = [team.ketua, ...team.anggota].filter(m => m && m.email);
+  all.forEach(m => {
+    const sel = m.email === (currentEmail || '').toLowerCase() ? 'selected' : '';
+    options.push(`<option value="${esc(m.email)}" ${sel}>${esc(m.nama)}${m.email === team.ketua.email ? ' (Ketua)' : ''}</option>`);
   });
   $('#assign-email').innerHTML = options.join('');
   let due = '';
