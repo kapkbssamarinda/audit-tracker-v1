@@ -330,7 +330,7 @@ function taskRow(t) {
       <td>${reviewBadge(t.Status_Review_Ketua)}</td>
       <td>${reviewBadge(t.Status_Review_Manager)}</td>
       <td class="small">${fmtDate(t.Due_Date)}</td>
-      <td class="small text-muted" title="oleh ${esc(t.Diupdate_Oleh || '-')}">
+      <td class="small text-muted" title="oleh ${esc(nameFor(t.Diupdate_Oleh))}">
         ${relativeTime(t.Tanggal_Update)}</td>
       <td class="text-end"><div class="btn-group-vertical btn-group-sm d-inline-flex gap-1">
         ${taskActions(t)}</div></td>
