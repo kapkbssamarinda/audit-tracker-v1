@@ -218,14 +218,14 @@ async function renderClientList() {
     : '';
 
   if (!clients.length) {
-    c.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3">
+    c.innerHTML = `<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h5 class="mb-0">Daftar Klien</h5>${addBtn}</div>
       <div class="alert alert-secondary">Belum ada klien yang bisa Anda akses.</div>`;
     return;
   }
 
   c.innerHTML = `
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h5 class="mb-0">Daftar Klien</h5>${addBtn}
     </div>
     <div class="row g-3">
@@ -262,7 +262,7 @@ function clientCard(cl) {
           <strong>${st.persen}%</strong> final (${st.final}/${st.total})
           · Selesai (menunggu review): ${st.selesai} · Proses: ${st.proses} · Belum: ${st.belum}
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
           <button class="btn btn-sm btn-primary flex-grow-1"
             onclick="renderTasks('${esc(cl.ID_Client)}')">
             <i class="bi bi-list-check me-1"></i>Lihat Task
@@ -347,20 +347,20 @@ function taskRow(t) {
     : '';
   return `
     <tr class="${final ? 'table-success-subtle task-final' : ''}">
-      <td>
+      <td class="task-cell-name">
         <div class="fw-medium">${esc(t.Nama_Pekerjaan)}
           ${final ? ' <i class="bi bi-lock-fill text-success" title="Final — terkunci"></i>' : ''}
         </div>
         ${catatan}
       </td>
-      <td class="small">${esc(nameFor(t.Ditugaskan_Ke_Email))}</td>
-      <td>${statusBadge(t.Status_Pekerjaan)}</td>
-      <td>${reviewBadge(t.Status_Review_Ketua)}</td>
-      <td>${reviewBadge(t.Status_Review_Manager)}</td>
-      <td class="small">${fmtDate(t.Due_Date)}</td>
-      <td class="small text-muted" title="oleh ${esc(nameFor(t.Diupdate_Oleh))}">
+      <td class="small" data-label="Ditugaskan ke">${esc(nameFor(t.Ditugaskan_Ke_Email))}</td>
+      <td data-label="Status">${statusBadge(t.Status_Pekerjaan)}</td>
+      <td data-label="Review Ketua">${reviewBadge(t.Status_Review_Ketua)}</td>
+      <td data-label="Review Manager">${reviewBadge(t.Status_Review_Manager)}</td>
+      <td class="small" data-label="Due date">${fmtDate(t.Due_Date)}</td>
+      <td class="small text-muted" data-label="Update" title="oleh ${esc(nameFor(t.Diupdate_Oleh))}">
         ${relativeTime(t.Tanggal_Update)}</td>
-      <td class="text-end"><div class="btn-group-vertical btn-group-sm d-inline-flex gap-1">
+      <td class="text-end task-cell-actions"><div class="task-actions btn-group-vertical btn-group-sm d-inline-flex gap-1">
         ${taskActions(t)}</div></td>
     </tr>`;
 }
@@ -525,7 +525,7 @@ async function renderUsers() {
   } catch (err) { c.innerHTML = errorBox(err.message); return; }
 
   c.innerHTML = `
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h5 class="mb-0">Master User</h5>
       <button class="btn btn-primary btn-sm" onclick="openUserModal()">
         <i class="bi bi-plus-lg"></i> Tambah User</button>

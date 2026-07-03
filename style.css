@@ -2,6 +2,17 @@
 
 .login-wrap {
   background: linear-gradient(135deg, #0d6efd 0%, #083b8c 100%);
+  padding: 1.5rem;
+  padding-left: max(1.5rem, env(safe-area-inset-left));
+  padding-right: max(1.5rem, env(safe-area-inset-right));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+/* Safari iOS: 100vh ikut address bar; dvh mengikuti viewport yang terlihat */
+@supports (min-height: 100dvh) {
+  .login-wrap {
+    min-height: 100dvh !important;
+  }
 }
 
 .login-card {
@@ -15,9 +26,17 @@
   transition: transform .12s ease, box-shadow .12s ease;
 }
 
-.client-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .12) !important;
+@media (hover: hover) and (pointer: fine) {
+  .client-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .12) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .client-card {
+    transition: none;
+  }
 }
 
 .task-table th {
@@ -46,4 +65,149 @@
 
 #main-tabs .nav-link {
   cursor: pointer;
+}
+
+/* ===== Navbar & area aman perangkat (notch iPhone, dsb.) ===== */
+
+.navbar.sticky-top {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+#view-app > .container-fluid {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+}
+
+#toast-container {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+  padding-right: max(1rem, env(safe-area-inset-right)) !important;
+}
+
+@media (max-width: 575.98px) {
+  .navbar-brand {
+    font-size: 1rem;
+  }
+
+  #nav-nama {
+    display: inline-block;
+    max-width: 7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+}
+
+/* ===== Tab utama: geser horizontal di layar sempit, jangan melipat ===== */
+
+@media (max-width: 767.98px) {
+  #main-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  #main-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  #main-tabs .nav-link {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Tabel task: berubah jadi daftar kartu bertumpuk di HP ===== */
+
+@media (max-width: 767.98px) {
+  .task-table thead {
+    display: none;
+  }
+
+  .task-table,
+  .task-table tbody,
+  .task-table tr,
+  .task-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .task-table tr {
+    padding: .875rem 1rem;
+    border-bottom: 1px solid var(--bs-border-color);
+  }
+
+  .task-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .task-table td {
+    border: 0;
+    padding: .2rem 0;
+  }
+
+  .task-cell-name {
+    padding-bottom: .5rem;
+  }
+
+  .task-cell-name .fw-medium {
+    font-size: .95rem;
+  }
+
+  .task-table td[data-label] {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    min-height: 1.75rem;
+  }
+
+  .task-table td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: var(--bs-secondary-color);
+  }
+
+  .task-cell-actions {
+    text-align: start !important;
+    padding-top: .5rem;
+  }
+
+  /* Tombol aksi: baris melipat selebar kartu, bukan kolom sempit */
+  .task-actions {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: .5rem !important;
+  }
+
+  .task-actions .btn {
+    flex: 1 1 auto;
+    border-radius: var(--bs-border-radius) !important;
+    font-size: .875rem;
+  }
+}
+
+/* ===== Target sentuh untuk perangkat layar sentuh (Android/iPhone) ===== */
+
+@media (pointer: coarse) {
+  .task-actions .btn {
+    min-height: 44px;
+    padding: .5rem .75rem;
+  }
+
+  .client-card .btn-sm,
+  .table .btn-sm {
+    min-height: 38px;
+    min-width: 38px;
+  }
+
+  #main-tabs .nav-link {
+    padding-top: .625rem;
+    padding-bottom: .625rem;
+  }
 }
