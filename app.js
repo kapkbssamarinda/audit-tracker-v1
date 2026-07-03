@@ -7,6 +7,8 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbz2F8HMgvLfFbttjtcc4x1K
 const GOOGLE_CLIENT_ID = '331125203639-vatl2f5456jq27i86hctknpjvnscltmi.apps.googleusercontent.com';
 
 // ---------- State ----------
+const SESSION_TTL_MS = 15 * 60 * 1000; // sesi lokal berlaku 15 menit sejak aktivitas terakhir
+
 let session = null;          // { sessionToken, nama, role, email }
 let currentClientId = null;  // klien yang sedang dibuka
 let currentTaskData = null;  // hasil getTasks terakhir
@@ -73,6 +75,31 @@ function reviewBadge(s) {
   return '<span class="badge bg-light text-muted border">-</span>';
 }
 
+// ---------- Sesi tersimpan (localStorage, sliding expiry) ----------
+function persistSession() {
+  if (!session) return;
+  localStorage.setItem('kbs_session', JSON.stringify({
+    session: session,
+    expiresAt: Date.now() + SESSION_TTL_MS
+  }));
+}
+
+function restoreSession() {
+  const raw = localStorage.getItem('kbs_session');
+  if (!raw) return null;
+  try {
+    const saved = JSON.parse(raw);
+    if (!saved.expiresAt || Date.now() > saved.expiresAt) {
+      localStorage.removeItem('kbs_session');
+      return null;
+    }
+    return saved.session;
+  } catch (e) {
+    localStorage.removeItem('kbs_session');
+    return null;
+  }
+}
+
 // ---------- Fetch wrapper ----------
 async function api(action, payload = {}, opts = {}) {
   const body = { action, payload };
@@ -95,6 +122,7 @@ async function api(action, payload = {}, opts = {}) {
     }
     throw new Error(res.error || 'Terjadi kesalahan');
   }
+  persistSession(); // aktivitas sukses → reset timer 15 menit
   return res.data;
 }
 
@@ -114,7 +142,7 @@ async function onGoogleCredential(resp) {
   try {
     const data = await api('login', { credential: resp.credential });
     session = data;
-    sessionStorage.setItem('kbs_session', JSON.stringify(session));
+    persistSession();
     showApp();
   } catch (err) {
     $('#login-status').textContent = '';
@@ -124,7 +152,7 @@ async function onGoogleCredential(resp) {
 
 function logout(msg) {
   session = null;
-  sessionStorage.removeItem('kbs_session');
+  localStorage.removeItem('kbs_session');
   $('#view-app').classList.add('d-none');
   $('#view-login').classList.remove('d-none');
   $('#login-status').textContent = msg || '';
@@ -661,10 +689,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) { toast(err.message); }
   });
 
-  // Restore sesi dari sessionStorage bila ada
-  const saved = sessionStorage.getItem('kbs_session');
-  if (saved) {
-    session = JSON.parse(saved);
+  // Restore sesi dari localStorage bila masih berlaku (< 15 menit sejak aktivitas terakhir)
+  session = restoreSession();
+  if (session) {
+    persistSession(); // membuka kembali aplikasi juga me-reset timer
     showApp();
   } else {
     $('#view-login').classList.remove('d-none');
