@@ -3,6 +3,7 @@
 .login-wrap {
   background: linear-gradient(135deg, #0d6efd 0%, #083b8c 100%);
   padding: 1.5rem;
+  padding-top: max(1.5rem, env(safe-area-inset-top));
   padding-left: max(1.5rem, env(safe-area-inset-left));
   padding-right: max(1.5rem, env(safe-area-inset-right));
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
@@ -72,6 +73,8 @@
 .navbar.sticky-top {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  /* Mode PWA standalone iOS: status bar translucent, navbar mengisi area di baliknya */
+  padding-top: max(.5rem, env(safe-area-inset-top));
 }
 
 #view-app > .container-fluid {

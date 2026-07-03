@@ -14,6 +14,8 @@ let currentClientId = null;  // klien yang sedang dibuka
 let currentTaskData = null;  // hasil getTasks terakhir
 let pendingReject = null;    // { taskId, level }
 let pendingAssign = null;    // { taskId }
+let teamsCache = null;       // hasil getTeams (invalidasi saat tim berubah)
+let usersCache = null;       // hasil adminListUsers untuk modal tim
 
 // ---------- Util ----------
 const $ = (sel) => document.querySelector(sel);
@@ -161,9 +163,9 @@ function logout(msg) {
 // ---------- Shell aplikasi ----------
 const TABS_BY_ROLE = {
   Admin: [
-    { id: 'clients', label: 'Klien & Task', icon: 'bi-briefcase' },
     { id: 'dashboard', label: 'Dashboard', icon: 'bi-bar-chart' },
     { id: 'users', label: 'Users', icon: 'bi-people' },
+    { id: 'teams', label: 'Tim', icon: 'bi-diagram-3' },
     { id: 'logs', label: 'Log Aktivitas', icon: 'bi-journal-text' }
   ],
   Partner: [{ id: 'dashboard', label: 'Dashboard', icon: 'bi-bar-chart' }],
@@ -200,6 +202,7 @@ function openTab(tab) {
   if (tab === 'clients') return renderClientList();
   if (tab === 'dashboard') return renderDashboard();
   if (tab === 'users') return renderUsers();
+  if (tab === 'teams') return renderTeams();
   if (tab === 'logs') return renderLogs();
 }
 
@@ -212,7 +215,7 @@ async function renderClientList() {
     clients = await api('getClients');
   } catch (err) { c.innerHTML = errorBox(err.message); return; }
 
-  const addBtn = session.role === 'Admin'
+  const addBtn = session.role === 'Manager'
     ? `<button class="btn btn-primary btn-sm" onclick="openClientModal()">
          <i class="bi bi-plus-lg"></i> Tambah Klien</button>`
     : '';
@@ -235,7 +238,7 @@ async function renderClientList() {
 
 function clientCard(cl) {
   const st = cl.stats;
-  const adminBtns = session.role === 'Admin' ? `
+  const manageBtns = session.role === 'Manager' && cl.clientRole === 'Manager' ? `
     <button class="btn btn-sm btn-outline-secondary" title="Edit klien"
       onclick='openClientModal(${JSON.stringify(cl).replace(/'/g, "&#39;")})'>
       <i class="bi bi-pencil"></i></button>
@@ -268,7 +271,7 @@ function clientCard(cl) {
             <i class="bi bi-list-check me-1"></i>Lihat Task
             <span class="badge bg-light text-primary ms-1">${esc(cl.clientRole)}</span>
           </button>
-          ${adminBtns}
+          ${manageBtns}
         </div>
       </div>
     </div>
@@ -369,13 +372,12 @@ function taskActions(t) {
   const role = currentTaskData.clientRole;
   const me = session.email;
   const isOwner = (t.Ditugaskan_Ke_Email || '').toLowerCase() === me;
-  const isAdmin = role === 'Admin';
   const final = t.Status_Review_Manager === 'Approved';
   const btns = [];
   const id = esc(t.ID_Task);
 
   // Pemilik task: ubah Status_Pekerjaan
-  if ((isOwner || isAdmin) && !final) {
+  if (isOwner && !final) {
     if (t.Status_Pekerjaan === 'Belum') {
       btns.push(`<button class="btn btn-warning" onclick="setStatus('${id}','Proses')">
         <i class="bi bi-play-fill"></i> Mulai</button>`);
@@ -390,7 +392,7 @@ function taskActions(t) {
   }
 
   // Ketua: membagi pekerjaan ke anggota tim + review task anggota
-  if (role === 'Ketua' || isAdmin) {
+  if (role === 'Ketua') {
     if (t.Status_Review_Ketua === 'Menunggu Review') {
       btns.push(`<button class="btn btn-success" onclick="review('${id}','ketua','Approved')">
         <i class="bi bi-hand-thumbs-up"></i> Approve (Ketua)</button>`);
@@ -405,7 +407,7 @@ function taskActions(t) {
   }
 
   // Manager: hanya review setelah Ketua approve (tidak menugaskan task)
-  if (role === 'Manager' || isAdmin) {
+  if (role === 'Manager') {
     if (t.Status_Review_Ketua === 'Approved' && t.Status_Review_Manager === 'Menunggu Review') {
       btns.push(`<button class="btn btn-success" onclick="review('${id}','manager','Approved')">
         <i class="bi bi-hand-thumbs-up"></i> Approve (Manager)</button>`);
@@ -570,29 +572,140 @@ async function deleteUser(email) {
   if (!confirm('Hapus user ' + email + '?')) return;
   try {
     await api('adminDeleteUser', { email });
+    usersCache = null; teamsCache = null;
     toast('User dihapus', 'success');
     renderUsers();
   } catch (err) { toast(err.message); }
 }
 
-// ---------- View: klien modal (Admin) ----------
-function openClientModal(cl) {
+// ---------- View: tim (Admin) ----------
+async function renderTeams() {
+  const c = $('#main-content');
+  c.innerHTML = spinner('Memuat tim...');
+  try {
+    const [teams, users] = await Promise.all([api('getTeams'), api('adminListUsers')]);
+    teamsCache = teams;
+    usersCache = users;
+  } catch (err) { c.innerHTML = errorBox(err.message); return; }
+
+  const memberBadge = (m) => m.aktif
+    ? `<span class="badge bg-light text-dark border me-1 mb-1">${esc(m.nama)}</span>`
+    : `<span class="badge bg-warning text-dark me-1 mb-1" title="User nonaktif / role tidak sesuai">
+         <i class="bi bi-exclamation-triangle"></i> ${esc(m.nama)}</span>`;
+
+  const rows = teamsCache.map(t => `
+    <tr>
+      <td class="fw-medium">${esc(t.Nama_Tim)}</td>
+      <td>${memberBadge(t.ketua)}</td>
+      <td>${t.anggota.length ? t.anggota.map(memberBadge).join('') : '<span class="text-muted small">—</span>'}</td>
+      <td class="small">${t.clientCount}${t.clientCount ? ` (${t.activeClientCount} aktif)` : ''}</td>
+      <td class="text-end">
+        <button class="btn btn-sm btn-outline-secondary" title="Edit tim"
+          onclick="openTeamModal('${esc(t.ID_Tim)}')"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" title="Hapus tim"
+          onclick="deleteTeam('${esc(t.ID_Tim)}','${esc(t.Nama_Tim)}')"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`).join('');
+
+  c.innerHTML = `
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h5 class="mb-0">Tim Audit</h5>
+      <button class="btn btn-primary btn-sm" onclick="openTeamModal()">
+        <i class="bi bi-plus-lg"></i> Tambah Tim</button>
+    </div>
+    ${teamsCache.length ? `
+    <div class="card shadow-sm"><div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr>
+          <th>Nama Tim</th><th>Ketua</th><th>Anggota</th><th>Klien</th><th class="text-end">Aksi</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div></div>`
+    : '<div class="alert alert-secondary">Belum ada tim. Buat tim agar Manager bisa memberikan klien ke tim.</div>'}`;
+}
+
+function openTeamModal(idTim) {
+  const team = idTim ? (teamsCache || []).find(t => String(t.ID_Tim) === String(idTim)) : null;
+  $('#team-modal-title').textContent = team ? 'Edit Tim' : 'Tambah Tim';
+  $('#team-id').value = team ? team.ID_Tim : '';
+  $('#team-nama').value = team ? team.Nama_Tim : '';
+
+  const aktif = (u) => u.Status === 'Aktif';
+  const ketuaOptions = (usersCache || []).filter(u => u.Role === 'Ketua' && aktif(u))
+    .map(u => `<option value="${esc(u.Email)}">${esc(u.Nama)}</option>`);
+  // Ketua lama yang sudah tidak valid tetap dimunculkan (berlabel) agar form tidak diam-diam berubah.
+  const curKetua = team ? String(team.Email_Ketua).toLowerCase() : '';
+  if (curKetua && !(usersCache || []).some(u =>
+      u.Email.toLowerCase() === curKetua && u.Role === 'Ketua' && aktif(u))) {
+    ketuaOptions.unshift(`<option value="${esc(curKetua)}">${esc(team.ketua.nama)} (tidak valid — ganti)</option>`);
+  }
+  $('#team-ketua').innerHTML = ketuaOptions.join('') || '<option value="">— tidak ada user role Ketua aktif —</option>';
+  if (curKetua) $('#team-ketua').value = curKetua;
+
+  const checked = team ? team.anggota.map(m => m.email) : [];
+  $('#team-anggota').innerHTML = (usersCache || [])
+    .filter(u => ['Ketua', 'Anggota'].includes(u.Role) && aktif(u))
+    .map(u => {
+      const e = u.Email.toLowerCase();
+      return `<div class="form-check">
+        <input class="form-check-input" type="checkbox" value="${esc(e)}"
+          id="ta-${esc(e)}" ${checked.includes(e) ? 'checked' : ''}>
+        <label class="form-check-label" for="ta-${esc(e)}">
+          ${esc(u.Nama)} <small class="text-muted">(${esc(u.Role)})</small>
+        </label>
+      </div>`;
+    }).join('') || '<div class="text-muted small">Belum ada user role Ketua/Anggota yang aktif.</div>';
+
+  bootstrap.Modal.getOrCreateInstance($('#modal-team')).show();
+}
+
+async function deleteTeam(idTim, nama) {
+  if (!confirm('Hapus tim "' + nama + '"?')) return;
+  try {
+    await api('adminDeleteTeam', { idTim });
+    teamsCache = null;
+    toast('Tim dihapus', 'success');
+    renderTeams();
+  } catch (err) { toast(err.message); }
+}
+
+// ---------- View: klien modal (Manager) ----------
+async function openClientModal(cl) {
   $('#client-modal-title').textContent = cl ? 'Edit Klien' : 'Tambah Klien';
   $('#client-id').value = cl ? cl.ID_Client : '';
   $('#client-nama').value = cl ? cl.Nama_Perusahaan : '';
   $('#client-tahun').value = cl ? cl.Tahun_Buku : '';
-  $('#client-manager').value = cl ? cl.Email_Manager : '';
-  $('#client-ketua').value = cl ? cl.Email_Ketua : '';
-  $('#client-anggota').value = cl ? cl.Email_Anggota : '';
   $('#client-status').value = cl ? cl.Status_Klien : 'Aktif';
   $('#client-new-hint').classList.toggle('d-none', !!cl);
+
+  const sel = $('#client-tim');
+  sel.innerHTML = '<option value="">Memuat tim...</option>';
   bootstrap.Modal.getOrCreateInstance($('#modal-client')).show();
+
+  try {
+    if (!teamsCache) teamsCache = await api('getTeams');
+  } catch (err) {
+    sel.innerHTML = '<option value="">— gagal memuat tim —</option>';
+    toast(err.message);
+    return;
+  }
+
+  const noTeams = !teamsCache.length;
+  $('#client-no-team-hint').classList.toggle('d-none', !noTeams);
+  $('#client-submit').disabled = noTeams;
+  sel.innerHTML = ['<option value="">— pilih tim —</option>']
+    .concat(teamsCache.map(t =>
+      `<option value="${esc(t.ID_Tim)}">${esc(t.Nama_Tim)} — Ketua: ${esc(t.ketua.nama)}, ${t.anggota.length} anggota</option>`))
+    .join('');
+  if (cl && cl.ID_Tim) sel.value = cl.ID_Tim; // ID_Tim kosong/dangling → tetap placeholder
 }
 
 async function deleteClient(idClient, nama) {
   if (!confirm('Hapus klien "' + nama + '" beserta seluruh task-nya?')) return;
   try {
-    await api('adminDeleteClient', { idClient });
+    await api('deleteClient', { idClient });
+    teamsCache = null; // jumlah klien per tim berubah
     toast('Klien dihapus', 'success');
     renderClientList();
   } catch (err) { toast(err.message); }
@@ -665,27 +778,48 @@ document.addEventListener('DOMContentLoaded', () => {
         status: $('#user-status').value
       });
       bootstrap.Modal.getInstance($('#modal-user')).hide();
+      usersCache = null; teamsCache = null;
       toast('User disimpan', 'success');
       renderUsers();
     } catch (err) { toast(err.message); }
   });
 
   $('#client-submit').addEventListener('click', async () => {
+    if (!$('#client-tim').value) { toast('Tim audit wajib dipilih'); return; }
     try {
-      const res = await api('adminSaveClient', {
+      const res = await api('saveClient', {
         idClient: $('#client-id').value || null,
         namaPerusahaan: $('#client-nama').value,
         tahunBuku: $('#client-tahun').value,
-        emailManager: $('#client-manager').value,
-        emailKetua: $('#client-ketua').value,
-        emailAnggota: $('#client-anggota').value,
+        idTim: $('#client-tim').value,
         statusKlien: $('#client-status').value
       });
       bootstrap.Modal.getInstance($('#modal-client')).hide();
+      teamsCache = null; // jumlah klien per tim berubah
       toast(res.tasksGenerated
         ? `Klien disimpan, ${res.tasksGenerated} task di-generate`
         : 'Klien disimpan', 'success');
+      if (res.warning) toast(res.warning, 'warning');
       renderClientList();
+    } catch (err) { toast(err.message); }
+  });
+
+  $('#team-submit').addEventListener('click', async () => {
+    const emailAnggota = Array.from($('#team-anggota').querySelectorAll('input:checked'))
+      .map(cb => cb.value).join(', ');
+    try {
+      const res = await api('adminSaveTeam', {
+        idTim: $('#team-id').value || null,
+        namaTim: $('#team-nama').value,
+        emailKetua: $('#team-ketua').value,
+        emailAnggota
+      });
+      bootstrap.Modal.getInstance($('#modal-team')).hide();
+      teamsCache = null;
+      toast(res.propagated
+        ? `Tim disimpan, ${res.propagated} klien disinkronkan`
+        : 'Tim disimpan', 'success');
+      renderTeams();
     } catch (err) { toast(err.message); }
   });
 
