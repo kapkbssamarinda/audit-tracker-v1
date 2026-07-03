@@ -70,6 +70,13 @@ function statusBadge(s) {
   return `<span class="badge bg-${map[s] || 'secondary'}">${esc(s)}</span>`;
 }
 
+// Task final: Reporting butuh approval Manager; Planning/Execution cukup approval Ketua.
+function isFinalTask(t) {
+  return t.Tahapan === 'Reporting'
+    ? t.Status_Review_Manager === 'Approved'
+    : t.Status_Review_Ketua === 'Approved';
+}
+
 function reviewBadge(s) {
   if (s === 'Approved') return '<span class="badge bg-success">Approved</span>';
   if (s === 'Rejected') return '<span class="badge bg-danger">Rejected</span>';
@@ -344,7 +351,7 @@ function nameFor(email) {
 }
 
 function taskRow(t) {
-  const final = t.Status_Review_Manager === 'Approved';
+  const final = isFinalTask(t);
   const catatan = t.Catatan
     ? `<div class="small text-danger mt-1"><i class="bi bi-chat-left-text"></i> ${esc(t.Catatan)}</div>`
     : '';
@@ -372,7 +379,7 @@ function taskActions(t) {
   const role = currentTaskData.clientRole;
   const me = session.email;
   const isOwner = (t.Ditugaskan_Ke_Email || '').toLowerCase() === me;
-  const final = t.Status_Review_Manager === 'Approved';
+  const final = isFinalTask(t);
   const btns = [];
   const id = esc(t.ID_Task);
 
@@ -399,6 +406,11 @@ function taskActions(t) {
       btns.push(`<button class="btn btn-outline-danger" onclick="openReject('${id}','ketua','${esc(t.Nama_Pekerjaan)}')">
         <i class="bi bi-hand-thumbs-down"></i> Reject (Ketua)</button>`);
     }
+    // Planning/Execution final di approval Ketua — Ketua pula yang bisa membukanya kembali.
+    if (final && t.Tahapan !== 'Reporting') {
+      btns.push(`<button class="btn btn-outline-danger" onclick="openReject('${id}','ketua','${esc(t.Nama_Pekerjaan)}')">
+        <i class="bi bi-unlock"></i> Buka Kembali</button>`);
+    }
     if (!final) {
       btns.push(`<button class="btn btn-outline-primary"
         onclick="openAssign('${id}','${esc(t.Ditugaskan_Ke_Email || '')}','${esc(t.Due_Date || '')}','${esc(t.Nama_Pekerjaan)}')">
@@ -406,8 +418,8 @@ function taskActions(t) {
     }
   }
 
-  // Manager: hanya review setelah Ketua approve (tidak menugaskan task)
-  if (role === 'Manager') {
+  // Manager: hanya me-review tahap Reporting, setelah Ketua approve (tidak menugaskan task)
+  if (role === 'Manager' && t.Tahapan === 'Reporting') {
     if (t.Status_Review_Ketua === 'Approved' && t.Status_Review_Manager === 'Menunggu Review') {
       btns.push(`<button class="btn btn-success" onclick="review('${id}','manager','Approved')">
         <i class="bi bi-hand-thumbs-up"></i> Approve (Manager)</button>`);
