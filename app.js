@@ -326,7 +326,7 @@ async function renderTasks(clientId) {
             <thead class="table-light">
               <tr>
                 <th>Pekerjaan</th><th>Ditugaskan Ke</th><th>Status</th>
-                <th>Review Ketua</th><th>Review Manager</th>
+                <th>Review Ketua</th>${tahapan === 'Reporting' ? '<th>Review Manager</th>' : ''}
                 <th>Due Date</th><th>Update</th><th class="text-end">Aksi</th>
               </tr>
             </thead>
@@ -366,7 +366,9 @@ function taskRow(t) {
       <td class="small" data-label="Ditugaskan ke">${esc(nameFor(t.Ditugaskan_Ke_Email))}</td>
       <td data-label="Status">${statusBadge(t.Status_Pekerjaan)}</td>
       <td data-label="Review Ketua">${reviewBadge(t.Status_Review_Ketua)}</td>
-      <td data-label="Review Manager">${reviewBadge(t.Status_Review_Manager)}</td>
+      ${t.Tahapan === 'Reporting'
+        ? `<td data-label="Review Manager">${reviewBadge(t.Status_Review_Manager)}</td>`
+        : ''}
       <td class="small" data-label="Due date">${fmtDate(t.Due_Date)}</td>
       <td class="small text-muted" data-label="Update" title="oleh ${esc(nameFor(t.Diupdate_Oleh))}">
         ${relativeTime(t.Tanggal_Update)}</td>
