@@ -1,0 +1,4 @@
+# Dependensi Node tidak dipakai frontend statis ini — jangan ikut ke repo/Pages
+node_modules/
+package.json
+package-lock.json
