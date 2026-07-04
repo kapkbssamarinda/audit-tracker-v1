@@ -39,6 +39,15 @@ function toast(msg, type = 'danger') {
   el.addEventListener('hidden.bs.toast', () => el.remove());
 }
 
+/** Cegah double-submit: nonaktifkan tombol + spinner selama request berjalan. */
+async function withBusy(btn, fn) {
+  if (btn.disabled) return;
+  const html = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...';
+  try { await fn(); } finally { btn.disabled = false; btn.innerHTML = html; }
+}
+
 function spinner(text = 'Memuat...') {
   return `<div class="text-center text-muted py-5">
     <div class="spinner-border text-primary mb-2"></div>
@@ -763,27 +772,27 @@ function errorBox(msg) {
 document.addEventListener('DOMContentLoaded', () => {
   $('#btn-logout').addEventListener('click', () => logout());
 
-  $('#reject-submit').addEventListener('click', async () => {
+  $('#reject-submit').addEventListener('click', () => withBusy($('#reject-submit'), async () => {
     const catatan = $('#reject-catatan').value.trim();
     if (!catatan) { toast('Catatan wajib diisi saat reject'); return; }
     bootstrap.Modal.getInstance($('#modal-reject')).hide();
     await review(pendingReject.taskId, pendingReject.level, 'Rejected', catatan);
-  });
+  }));
 
-  $('#assign-submit').addEventListener('click', async () => {
-    bootstrap.Modal.getInstance($('#modal-assign')).hide();
+  $('#assign-submit').addEventListener('click', () => withBusy($('#assign-submit'), async () => {
     try {
       await api('assignTask', {
         taskId: pendingAssign.taskId,
         email: $('#assign-email').value,
         dueDate: $('#assign-due').value
       });
+      bootstrap.Modal.getInstance($('#modal-assign')).hide();
       toast('Penugasan disimpan', 'success');
       renderTasks(currentClientId);
     } catch (err) { toast(err.message); }
-  });
+  }));
 
-  $('#user-submit').addEventListener('click', async () => {
+  $('#user-submit').addEventListener('click', () => withBusy($('#user-submit'), async () => {
     try {
       await api('adminSaveUser', {
         email: $('#user-email').value,
@@ -796,9 +805,9 @@ document.addEventListener('DOMContentLoaded', () => {
       toast('User disimpan', 'success');
       renderUsers();
     } catch (err) { toast(err.message); }
-  });
+  }));
 
-  $('#client-submit').addEventListener('click', async () => {
+  $('#client-submit').addEventListener('click', () => withBusy($('#client-submit'), async () => {
     if (!$('#client-tim').value) { toast('Tim audit wajib dipilih'); return; }
     try {
       const res = await api('saveClient', {
@@ -816,9 +825,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.warning) toast(res.warning, 'warning');
       renderClientList();
     } catch (err) { toast(err.message); }
-  });
+  }));
 
-  $('#team-submit').addEventListener('click', async () => {
+  $('#team-submit').addEventListener('click', () => withBusy($('#team-submit'), async () => {
     const emailAnggota = Array.from($('#team-anggota').querySelectorAll('input:checked'))
       .map(cb => cb.value).join(', ');
     try {
@@ -835,7 +844,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : 'Tim disimpan', 'success');
       renderTeams();
     } catch (err) { toast(err.message); }
-  });
+  }));
 
   // Restore sesi dari localStorage bila masih berlaku (< 15 menit sejak aktivitas terakhir)
   session = restoreSession();
