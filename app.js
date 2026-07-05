@@ -16,6 +16,7 @@ let pendingReject = null;    // { taskId, level }
 let pendingAssign = null;    // { taskId }
 let teamsCache = null;       // hasil getTeams (invalidasi saat tim berubah)
 let usersCache = null;       // hasil adminListUsers untuk modal tim
+let clientsCache = null;     // hasil getClients untuk modal edit
 
 // ---------- Util ----------
 const $ = (sel) => document.querySelector(sel);
@@ -229,6 +230,7 @@ async function renderClientList() {
   let clients;
   try {
     clients = await api('getClients');
+    clientsCache = clients;
   } catch (err) { c.innerHTML = errorBox(err.message); return; }
 
   const addBtn = session.role === 'Manager'
@@ -256,7 +258,7 @@ function clientCard(cl) {
   const st = cl.stats;
   const manageBtns = session.role === 'Manager' && cl.clientRole === 'Manager' ? `
     <button class="btn btn-sm btn-outline-secondary" title="Edit klien"
-      onclick='openClientModal(${JSON.stringify(cl).replace(/'/g, "&#39;")})'>
+      onclick="openClientModal('${esc(cl.ID_Client)}')">
       <i class="bi bi-pencil"></i></button>
     <button class="btn btn-sm btn-outline-danger" title="Hapus klien"
       onclick="deleteClient('${esc(cl.ID_Client)}','${esc(cl.Nama_Perusahaan)}')">
@@ -402,11 +404,17 @@ function taskActions(t) {
     } else if (t.Status_Pekerjaan === 'Proses') {
       btns.push(`<button class="btn btn-info" onclick="setStatus('${id}','Selesai')">
         <i class="bi bi-check-lg"></i> Selesai</button>`);
-      if (t.Status_Review_Ketua === '-' && t.Status_Review_Manager === '-') {
+      if (t.Status_Review_Ketua !== 'Menunggu Review' && t.Status_Review_Ketua !== 'Approved') {
         btns.push(`<button class="btn btn-outline-secondary" onclick="setStatus('${id}','Belum')">
           <i class="bi bi-arrow-counterclockwise"></i> Ke Belum</button>`);
       }
     }
+  }
+
+  // Ambil task kosong (Klaim)
+  if (!isOwner && !t.Ditugaskan_Ke_Email && !final && role !== 'Manager') {
+    btns.push(`<button class="btn btn-outline-primary" onclick="claimTask('${id}')">
+      <i class="bi bi-hand-index-thumb"></i> Ambil Task</button>`);
   }
 
   // Ketua: membagi pekerjaan ke anggota tim + review task anggota
@@ -419,7 +427,7 @@ function taskActions(t) {
     }
     // Planning/Execution final di approval Ketua — Ketua pula yang bisa membukanya kembali.
     if (final && t.Tahapan !== 'Reporting') {
-      btns.push(`<button class="btn btn-outline-danger" onclick="openReject('${id}','ketua','${esc(t.Nama_Pekerjaan)}')">
+      btns.push(`<button class="btn btn-outline-danger" onclick="openReopen('${id}','ketua')">
         <i class="bi bi-unlock"></i> Buka Kembali</button>`);
     }
     if (!final) {
@@ -438,7 +446,7 @@ function taskActions(t) {
         <i class="bi bi-hand-thumbs-down"></i> Reject (Manager)</button>`);
     }
     if (final) {
-      btns.push(`<button class="btn btn-outline-danger" onclick="openReject('${id}','manager','${esc(t.Nama_Pekerjaan)}')">
+      btns.push(`<button class="btn btn-outline-danger" onclick="openReopen('${id}','manager')">
         <i class="bi bi-unlock"></i> Buka Kembali</button>`);
     }
   }
@@ -460,6 +468,20 @@ async function review(taskId, level, decision, catatan) {
     toast(decision === 'Approved' ? 'Task di-approve' : 'Task ditolak', 'success');
     renderTasks(currentClientId);
   } catch (err) { toast(err.message); }
+}
+
+async function claimTask(taskId) {
+  try {
+    await api('assignTask', { taskId, email: session.email, dueDate: '' });
+    toast('Task berhasil diambil', 'success');
+    renderTasks(currentClientId);
+  } catch (err) { toast(err.message); }
+}
+
+function openReopen(taskId, level) {
+  if (confirm('Buka kembali task ini? Status task akan ditolak dan dikembalikan ke anggota.')) {
+    review(taskId, level, 'Rejected', 'Dibuka kembali oleh reviewer');
+  }
 }
 
 // --- Reject modal ---
@@ -694,7 +716,8 @@ async function deleteTeam(idTim, nama) {
 }
 
 // ---------- View: klien modal (Manager) ----------
-async function openClientModal(cl) {
+async function openClientModal(idClient) {
+  const cl = idClient ? (clientsCache || []).find(c => String(c.ID_Client) === String(idClient)) : null;
   $('#client-modal-title').textContent = cl ? 'Edit Klien' : 'Tambah Klien';
   $('#client-id').value = cl ? cl.ID_Client : '';
   $('#client-nama').value = cl ? cl.Nama_Perusahaan : '';
@@ -808,6 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }));
 
   $('#client-submit').addEventListener('click', () => withBusy($('#client-submit'), async () => {
+    if (!$('#client-nama').value.trim() || !$('#client-tahun').value.trim()) { toast('Nama Perusahaan dan Tahun Buku wajib diisi'); return; }
     if (!$('#client-tim').value) { toast('Tim audit wajib dipilih'); return; }
     try {
       const res = await api('saveClient', {
@@ -828,6 +852,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }));
 
   $('#team-submit').addEventListener('click', () => withBusy($('#team-submit'), async () => {
+    if (!$('#team-nama').value.trim()) { toast('Nama Tim wajib diisi'); return; }
     const emailAnggota = Array.from($('#team-anggota').querySelectorAll('input:checked'))
       .map(cb => cb.value).join(', ');
     try {
