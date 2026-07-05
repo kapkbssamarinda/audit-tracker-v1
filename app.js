@@ -412,7 +412,8 @@ function taskActions(t) {
   }
 
   // Ambil task kosong (Klaim)
-  if (!isOwner && !t.Ditugaskan_Ke_Email && !final && role !== 'Manager') {
+  const isUnassigned = !t.Ditugaskan_Ke_Email || t.Ditugaskan_Ke_Email.trim() === '-' || t.Ditugaskan_Ke_Email.trim() === '';
+  if (!isOwner && isUnassigned && !final && role !== 'Manager') {
     btns.push(`<button class="btn btn-outline-primary" onclick="claimTask('${id}')">
       <i class="bi bi-hand-index-thumb"></i> Ambil Task</button>`);
   }
@@ -472,7 +473,7 @@ async function review(taskId, level, decision, catatan) {
 
 async function claimTask(taskId) {
   try {
-    await api('assignTask', { taskId, email: session.email, dueDate: '' });
+    await api('assignTask', { taskId, email: session.email });
     toast('Task berhasil diambil', 'success');
     renderTasks(currentClientId);
   } catch (err) { toast(err.message); }
