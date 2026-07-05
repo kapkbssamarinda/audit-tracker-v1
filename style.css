@@ -1,7 +1,17 @@
 /* Audit Progress Tracker — KAP KBS */
 
+:root {
+  /* Override Bootstrap colors with Logo palette */
+  --bs-primary: #012e7c;
+  --bs-primary-rgb: 1, 46, 124;
+  --bs-danger: #c41412;
+  --bs-danger-rgb: 196, 20, 18;
+  --bs-warning: #ffd700;
+  --bs-warning-rgb: 255, 215, 0;
+}
+
 .login-wrap {
-  background: linear-gradient(135deg, #0d6efd 0%, #083b8c 100%);
+  background: linear-gradient(135deg, #012e7c 0%, #001a4a 100%);
   padding: 1.5rem;
   padding-top: max(1.5rem, env(safe-area-inset-top));
   padding-left: max(1.5rem, env(safe-area-inset-left));
