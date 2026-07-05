@@ -1,0 +1,89 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 85099184470,
+      "run_id": 28693551196,
+      "workflow_name": "Deploy GitHub Pages",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/kapkbssamarinda/audit-tracker-v1/actions/runs/28693551196",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOTLhsU88AAAAT0E6BVg",
+      "head_sha": "69db5a220bdc9285c7c98305a1f744d4b13c348c",
+      "url": "https://api.github.com/repos/kapkbssamarinda/audit-tracker-v1/actions/jobs/85099184470",
+      "html_url": "https://github.com/kapkbssamarinda/audit-tracker-v1/actions/runs/28693551196/job/85099184470",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-07-04T03:29:16Z",
+      "started_at": "2026-07-04T03:29:19Z",
+      "completed_at": "2026-07-04T03:29:31Z",
+      "name": "deploy",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-07-04T03:29:20Z",
+          "completed_at": "2026-07-04T03:29:21Z"
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-07-04T03:29:21Z",
+          "completed_at": "2026-07-04T03:29:22Z"
+        },
+        {
+          "name": "Setup Pages",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-07-04T03:29:22Z",
+          "completed_at": "2026-07-04T03:29:22Z"
+        },
+        {
+          "name": "Upload artifact",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-07-04T03:29:22Z",
+          "completed_at": "2026-07-04T03:29:23Z"
+        },
+        {
+          "name": "Deploy to GitHub Pages",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 5,
+          "started_at": "2026-07-04T03:29:23Z",
+          "completed_at": "2026-07-04T03:29:29Z"
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-07-04T03:29:29Z",
+          "completed_at": "2026-07-04T03:29:29Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-07-04T03:29:29Z",
+          "completed_at": "2026-07-04T03:29:29Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/kapkbssamarinda/audit-tracker-v1/check-runs/85099184470",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000211,
+      "runner_name": "GitHub Actions 1000000211",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}
