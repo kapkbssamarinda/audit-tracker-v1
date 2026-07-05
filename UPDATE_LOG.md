@@ -11,7 +11,12 @@ Dokumen ini berisi daftar masalah yang telah diperbaiki pada proyek **Audit Trac
 - **Klaim / Ambil Task (Self-Assign):** 
   - Ditambahkan fungsi bagi Anggota Tim untuk mengambil task yang masih kosong (belum di-assign oleh Ketua). 
   - **[BACKEND UPDATED]** Kode pada file `code.gs` telah diperbarui sehingga `assignTask` kini secara sah mengizinkan user dengan role `Anggota` untuk menugaskan suatu task *asalkan* email tujuannya adalah dirinya sendiri (`isSelfAssigning`).
-  - **[FRONTEND UPDATED]** Perbaikan logika pada fungsi `claimTask` di `app.js` agar tidak secara tidak sengaja menimpa *Due Date* dengan nilai kosong saat anggota melakukan klaim pekerjaan.
+- **Batasan Tahapan Reporting (Hanya untuk Ketua):**
+  - Kini semua *task* yang berada pada tahapan **Reporting** dikunci secara eksklusif untuk diselesaikan oleh Ketua Tim.
+  - **[FRONTEND UPDATED]** Anggota tim tidak akan melihat tombol "Ambil Task" pada tahapan Reporting. Jika Ketua mengklik tombol "Tugaskan", pilihan nama yang muncul di modal dropdown (hanya) memunculkan nama Ketua.
+  - **[BACKEND UPDATED]** Backend (via `code.gs`) akan secara ketat memblokir penugasan (assign) jika tahapan adalah 'Reporting' dan email target bukanlah email milik Ketua.
+- **Penyederhanaan UI: Penghapusan Due Date:**
+  - Menghapus kolom dan fungsi input `Due Date` dari semua elemen UI (tabel Task, modal Assign) di `app.js` dan `index.html`, serta menghapus logika pembacaan due date pada API `assignTask` di `code.gs` agar antarmuka menjadi lebih bersih karena tidak digunakan.
 - **Perbaikan UI Re-open (Buka Kembali):**
   - Tombol **Buka Kembali** tidak lagi menampilkan Modal "Tolak Pekerjaan" yang wajib diisi dengan alasan penolakan yang membingungkan.
   - Sekarang aplikasi hanya memunculkan sebuah dialog konfirmasi standar (_browser confirm_) yang memberikan note otomatis `"Dibuka kembali oleh reviewer"`.

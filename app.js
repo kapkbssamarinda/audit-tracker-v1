@@ -338,7 +338,7 @@ async function renderTasks(clientId) {
               <tr>
                 <th>Pekerjaan</th><th>Ditugaskan Ke</th><th>Status</th>
                 <th>Review Ketua</th>${tahapan === 'Reporting' ? '<th>Review Manager</th>' : ''}
-                <th>Due Date</th><th>Update</th><th class="text-end">Aksi</th>
+                <th>Update</th><th class="text-end">Aksi</th>
               </tr>
             </thead>
             <tbody>${grouped[tahapan].map(taskRow).join('')}</tbody>
@@ -380,7 +380,6 @@ function taskRow(t) {
       ${t.Tahapan === 'Reporting'
         ? `<td data-label="Review Manager">${reviewBadge(t.Status_Review_Manager)}</td>`
         : ''}
-      <td class="small" data-label="Due date">${fmtDate(t.Due_Date)}</td>
       <td class="small text-muted" data-label="Update" title="oleh ${esc(nameFor(t.Diupdate_Oleh))}">
         ${relativeTime(t.Tanggal_Update)}</td>
       <td class="text-end task-cell-actions"><div class="task-actions btn-group-vertical btn-group-sm d-inline-flex gap-1">
@@ -413,7 +412,8 @@ function taskActions(t) {
 
   // Ambil task kosong (Klaim)
   const isUnassigned = !t.Ditugaskan_Ke_Email || t.Ditugaskan_Ke_Email.trim() === '-' || t.Ditugaskan_Ke_Email.trim() === '';
-  if (!isOwner && isUnassigned && !final && role !== 'Manager') {
+  const canClaim = role === 'Ketua' || (role === 'Anggota' && t.Tahapan !== 'Reporting');
+  if (!isOwner && isUnassigned && !final && role !== 'Manager' && canClaim) {
     btns.push(`<button class="btn btn-outline-primary" onclick="claimTask('${id}')">
       <i class="bi bi-hand-index-thumb"></i> Ambil Task</button>`);
   }
@@ -433,7 +433,7 @@ function taskActions(t) {
     }
     if (!final) {
       btns.push(`<button class="btn btn-outline-primary"
-        onclick="openAssign('${id}','${esc(t.Ditugaskan_Ke_Email || '')}','${esc(t.Due_Date || '')}','${esc(t.Nama_Pekerjaan)}')">
+        onclick="openAssign('${id}','${esc(t.Ditugaskan_Ke_Email || '')}','${esc(t.Nama_Pekerjaan)}','${esc(t.Tahapan)}')">
         <i class="bi bi-person-plus"></i> Tugaskan</button>`);
     }
   }
@@ -494,23 +494,19 @@ function openReject(taskId, level, taskName) {
 }
 
 // --- Assign modal ---
-function openAssign(taskId, currentEmail, currentDue, taskName) {
+function openAssign(taskId, currentEmail, taskName, tahapan) {
   pendingAssign = { taskId };
   $('#assign-task-name').textContent = taskName;
   const team = currentTaskData.team;
   const options = ['<option value="">— (belum ditugaskan) —</option>'];
-  const all = [team.ketua, ...team.anggota].filter(m => m && m.email);
+  let all = [team.ketua, ...team.anggota].filter(m => m && m.email);
+  if (tahapan === 'Reporting') all = [team.ketua].filter(m => m && m.email); // Hanya Ketua untuk Reporting
+
   all.forEach(m => {
     const sel = m.email === (currentEmail || '').toLowerCase() ? 'selected' : '';
     options.push(`<option value="${esc(m.email)}" ${sel}>${esc(m.nama)}${m.email === team.ketua.email ? ' (Ketua)' : ''}</option>`);
   });
   $('#assign-email').innerHTML = options.join('');
-  let due = '';
-  if (currentDue) {
-    const d = new Date(currentDue);
-    if (!isNaN(d)) due = d.toISOString().slice(0, 10);
-  }
-  $('#assign-due').value = due;
   bootstrap.Modal.getOrCreateInstance($('#modal-assign')).show();
 }
 
@@ -807,8 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       await api('assignTask', {
         taskId: pendingAssign.taskId,
-        email: $('#assign-email').value,
-        dueDate: $('#assign-due').value
+        email: $('#assign-email').value
       });
       bootstrap.Modal.getInstance($('#modal-assign')).hide();
       toast('Penugasan disimpan', 'success');
