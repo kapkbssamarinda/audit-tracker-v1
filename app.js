@@ -263,7 +263,7 @@ function clientCard(cl) {
     <button class="btn btn-sm btn-outline-danger" title="Hapus klien"
       onclick="deleteClient('${esc(cl.ID_Client)}','${esc(cl.Nama_Perusahaan)}')">
       <i class="bi bi-trash"></i></button>` : '';
-  const statusColor = { 'Aktif': 'success', 'Selesai': 'primary', 'Nonaktif': 'secondary' }[cl.Status_Klien] || 'secondary';
+  const statusColor = { 'Aktif': 'success', 'Selesai': 'info text-dark', 'Nonaktif': 'secondary' }[cl.Status_Klien] || 'secondary';
 
   return `
   <div class="col-12 col-md-6 col-xl-4">
@@ -382,7 +382,7 @@ function taskRow(t) {
         : ''}
       <td class="small text-muted" data-label="Update" title="oleh ${esc(nameFor(t.Diupdate_Oleh))}">
         ${relativeTime(t.Tanggal_Update)}</td>
-      <td class="text-end task-cell-actions"><div class="task-actions btn-group-vertical btn-group-sm d-inline-flex gap-1">
+      <td class="text-end task-cell-actions"><div class="task-actions d-inline-flex flex-wrap gap-1 justify-content-end">
         ${taskActions(t)}</div></td>
     </tr>`;
 }
@@ -398,13 +398,13 @@ function taskActions(t) {
   // Pemilik task: ubah Status_Pekerjaan
   if (isOwner && !final) {
     if (t.Status_Pekerjaan === 'Belum') {
-      btns.push(`<button class="btn btn-warning" onclick="setStatus('${id}','Proses')">
+      btns.push(`<button class="btn btn-sm btn-warning" onclick="setStatus('${id}','Proses')">
         <i class="bi bi-play-fill"></i> Mulai</button>`);
     } else if (t.Status_Pekerjaan === 'Proses') {
-      btns.push(`<button class="btn btn-info" onclick="setStatus('${id}','Selesai')">
+      btns.push(`<button class="btn btn-sm btn-info" onclick="setStatus('${id}','Selesai')">
         <i class="bi bi-check-lg"></i> Selesai</button>`);
       if (t.Status_Review_Ketua !== 'Menunggu Review' && t.Status_Review_Ketua !== 'Approved') {
-        btns.push(`<button class="btn btn-outline-secondary" onclick="setStatus('${id}','Belum')">
+        btns.push(`<button class="btn btn-sm btn-outline-secondary" onclick="setStatus('${id}','Belum')">
           <i class="bi bi-arrow-counterclockwise"></i> Ke Belum</button>`);
       }
     }
@@ -414,25 +414,25 @@ function taskActions(t) {
   const isUnassigned = !t.Ditugaskan_Ke_Email || t.Ditugaskan_Ke_Email.trim() === '-' || t.Ditugaskan_Ke_Email.trim() === '';
   const canClaim = role === 'Ketua' || (role === 'Anggota' && t.Tahapan !== 'Reporting');
   if (!isOwner && isUnassigned && !final && role !== 'Manager' && canClaim) {
-    btns.push(`<button class="btn btn-outline-primary" onclick="claimTask('${id}')">
+    btns.push(`<button class="btn btn-sm btn-outline-primary" onclick="claimTask('${id}')">
       <i class="bi bi-hand-index-thumb"></i> Ambil Task</button>`);
   }
 
   // Ketua: membagi pekerjaan ke anggota tim + review task anggota
   if (role === 'Ketua') {
     if (t.Status_Review_Ketua === 'Menunggu Review') {
-      btns.push(`<button class="btn btn-success" onclick="review('${id}','ketua','Approved')">
+      btns.push(`<button class="btn btn-sm btn-outline-success" onclick="review('${id}','ketua','Approved')">
         <i class="bi bi-hand-thumbs-up"></i> Approve (Ketua)</button>`);
-      btns.push(`<button class="btn btn-outline-danger" onclick="openReject('${id}','ketua','${esc(t.Nama_Pekerjaan)}')">
+      btns.push(`<button class="btn btn-sm btn-outline-danger" onclick="openReject('${id}','ketua','${esc(t.Nama_Pekerjaan)}')">
         <i class="bi bi-hand-thumbs-down"></i> Reject (Ketua)</button>`);
     }
     // Planning/Execution final di approval Ketua — Ketua pula yang bisa membukanya kembali.
     if (final && t.Tahapan !== 'Reporting') {
-      btns.push(`<button class="btn btn-outline-danger" onclick="openReopen('${id}','ketua')">
+      btns.push(`<button class="btn btn-sm btn-outline-danger" onclick="openReopen('${id}','ketua')">
         <i class="bi bi-unlock"></i> Buka Kembali</button>`);
     }
     if (!final) {
-      btns.push(`<button class="btn btn-outline-primary"
+      btns.push(`<button class="btn btn-sm btn-outline-primary"
         onclick="openAssign('${id}','${esc(t.Ditugaskan_Ke_Email || '')}','${esc(t.Nama_Pekerjaan)}','${esc(t.Tahapan)}')">
         <i class="bi bi-person-plus"></i> Tugaskan</button>`);
     }
@@ -441,13 +441,13 @@ function taskActions(t) {
   // Manager: hanya me-review tahap Reporting, setelah Ketua approve (tidak menugaskan task)
   if (role === 'Manager' && t.Tahapan === 'Reporting') {
     if (t.Status_Review_Ketua === 'Approved' && t.Status_Review_Manager === 'Menunggu Review') {
-      btns.push(`<button class="btn btn-success" onclick="review('${id}','manager','Approved')">
+      btns.push(`<button class="btn btn-sm btn-outline-success" onclick="review('${id}','manager','Approved')">
         <i class="bi bi-hand-thumbs-up"></i> Approve (Manager)</button>`);
-      btns.push(`<button class="btn btn-outline-danger" onclick="openReject('${id}','manager','${esc(t.Nama_Pekerjaan)}')">
+      btns.push(`<button class="btn btn-sm btn-outline-danger" onclick="openReject('${id}','manager','${esc(t.Nama_Pekerjaan)}')">
         <i class="bi bi-hand-thumbs-down"></i> Reject (Manager)</button>`);
     }
     if (final) {
-      btns.push(`<button class="btn btn-outline-danger" onclick="openReopen('${id}','manager')">
+      btns.push(`<button class="btn btn-sm btn-outline-danger" onclick="openReopen('${id}','manager')">
         <i class="bi bi-unlock"></i> Buka Kembali</button>`);
     }
   }
@@ -584,7 +584,7 @@ async function renderUsers() {
           <tr>
             <td>${esc(u.Email)}</td>
             <td>${esc(u.Nama)}</td>
-            <td><span class="badge bg-primary">${esc(u.Role)}</span></td>
+            <td><span class="badge bg-light text-primary border">${esc(u.Role)}</span></td>
             <td><span class="badge bg-${u.Status === 'Aktif' ? 'success' : 'secondary'}">${esc(u.Status)}</span></td>
             <td class="text-end">
               <button class="btn btn-sm btn-outline-secondary"

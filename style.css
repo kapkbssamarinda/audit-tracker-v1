@@ -52,7 +52,7 @@
 }
 
 .task-final {
-  background-color: #f0faf3;
+  /* Di-handle oleh .table-success-subtle dari Bootstrap */
 }
 
 .task-final td {
@@ -109,10 +109,15 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    scroll-snap-type: x mandatory;
   }
 
   #main-tabs::-webkit-scrollbar {
     display: none;
+  }
+
+  #main-tabs .nav-item {
+    scroll-snap-align: start;
   }
 
   #main-tabs .nav-link {
@@ -212,5 +217,18 @@
   #main-tabs .nav-link {
     padding-top: .625rem;
     padding-bottom: .625rem;
+  }
+}
+
+/* ===== Posisi Toast di Mobile ===== */
+@media (max-width: 575.98px) {
+  #toast-container {
+    top: max(1rem, env(safe-area-inset-top)) !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: 90vw;
+    padding: 0 !important;
   }
 }

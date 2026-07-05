@@ -10,13 +10,15 @@ Dokumen ini berisi daftar masalah yang telah diperbaiki pada proyek **Audit Trac
 ## 2. Peningkatan Alur Kerja (Workflow UI)
 - **Klaim / Ambil Task (Self-Assign):** 
   - Ditambahkan fungsi bagi Anggota Tim untuk mengambil task yang masih kosong (belum di-assign oleh Ketua). 
-  - **[BACKEND UPDATED]** Kode pada file `code.gs` telah diperbarui sehingga `assignTask` kini secara sah mengizinkan user dengan role `Anggota` untuk menugaskan suatu task *asalkan* email tujuannya adalah dirinya sendiri (`isSelfAssigning`).
+  - **[BACKEND UPDATED - Visibility]** Memperbaiki filter pada fungsi `getTasks` di `code.gs`. Sebelumnya, *role* Anggota tidak diberikan data *task* yang kosong (belum ditugaskan). Kini filter telah diperbarui sehingga Anggota dapat melihat *task* kosong tersebut di tabel dan memunculkan tombol klaim.
+  - **[BACKEND UPDATED - Authorization]** Kode pada file `code.gs` telah diperbarui sehingga fungsi `assignTask` kini secara sah mengizinkan user dengan role `Anggota` untuk menugaskan suatu task *asalkan* email tujuannya adalah dirinya sendiri (`isSelfAssigning`).
 - **Batasan Tahapan Reporting (Hanya untuk Ketua):**
   - Kini semua *task* yang berada pada tahapan **Reporting** dikunci secara eksklusif untuk diselesaikan oleh Ketua Tim.
   - **[FRONTEND UPDATED]** Anggota tim tidak akan melihat tombol "Ambil Task" pada tahapan Reporting. Jika Ketua mengklik tombol "Tugaskan", pilihan nama yang muncul di modal dropdown (hanya) memunculkan nama Ketua.
   - **[BACKEND UPDATED]** Backend (via `code.gs`) akan secara ketat memblokir penugasan (assign) jika tahapan adalah 'Reporting' dan email target bukanlah email milik Ketua.
 - **Penyederhanaan UI: Penghapusan Due Date:**
   - Menghapus kolom dan fungsi input `Due Date` dari semua elemen UI (tabel Task, modal Assign) di `app.js` dan `index.html`, serta menghapus logika pembacaan due date pada API `assignTask` di `code.gs` agar antarmuka menjadi lebih bersih karena tidak digunakan.
+  - **[BACKEND UPDATED]** Menghapus referensi `Due_Date` dari susunan array `HEADERS` dalam *source code* `code.gs` agar backend sepenuhnya terlepas dari kolom tersebut.
 - **Perbaikan UI Re-open (Buka Kembali):**
   - Tombol **Buka Kembali** tidak lagi menampilkan Modal "Tolak Pekerjaan" yang wajib diisi dengan alasan penolakan yang membingungkan.
   - Sekarang aplikasi hanya memunculkan sebuah dialog konfirmasi standar (_browser confirm_) yang memberikan note otomatis `"Dibuka kembali oleh reviewer"`.
