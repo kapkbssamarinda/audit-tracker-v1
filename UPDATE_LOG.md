@@ -24,3 +24,19 @@ Dokumen ini berisi daftar masalah yang telah diperbaiki pada proyek **Audit Trac
   - Sekarang aplikasi hanya memunculkan sebuah dialog konfirmasi standar (_browser confirm_) yang memberikan note otomatis `"Dibuka kembali oleh reviewer"`.
 - **Pengembalian Status "Ke Belum":**
   - Anggota tim kini dapat mengklik **"Ke Belum"** untuk me-reset kembali pekerjaan yang pernah ditolak (_Rejected_), asalkan statusnya saat ini bukan sedang dalam proses _Review_ ('Menunggu Review') dan bukan _Approved_. Ini memungkinkan anggota mengulang task yang telah di-_reject_.
+
+## 3. Peningkatan Antarmuka (UI/UX)
+- **Hierarki Visual & Kenyamanan Mobile:**
+  - Menambahkan pembatas visual di bawah tab navigasi utama agar tidak menyatu dengan konten (*Whitespace/Border*).
+  - Menyederhanakan tata letak tombol aksi di dalam tabel pada mode _desktop_ (dari _vertical_ menjadi _inline flex_).
+  - Menyelaraskan bobot visual tombol *review* (*Approve* dan *Reject*) menggunakan gaya *outline*.
+  - Mengubah _Toast_ notifikasi agar muncul di posisi tengah atas (bukan di kanan bawah) pada layar _mobile_ agar tidak tertutup jari pengguna.
+  - Memaksimalkan semua _modal form_ menjadi mode _fullscreen_ pada layar kecil (`modal-fullscreen-sm-down`).
+  - Menambahkan fitur *CSS Scroll Snap* pada tab navigasi agar pergeseran tab di *mobile* terasa natural dan halus layaknya aplikasi *native*.
+- **Konsistensi Tema Warna & Logo:**
+  - Mengekstrak warna utama dari file logo KAP KBS (`src/logo/logo.png`) dan menjadikannya dasar skema warna (*Navy Blue, Red, Yellow*) dengan cara melakukan *override* variabel akar Bootstrap 5 (`:root`). 
+  - Mengubah latar belakang layar _login_ menjadi gradien biru dongker yang relevan dengan citra profesional logo perusahaan.
+  - Menempatkan logo aplikasi di atas _form_ layar _login_ dengan batas maksimal yang diperbesar, menggantikan *icon clipboard* bawaan.
+- **Implementasi SweetAlert2 pada Alur Login:**
+  - Layar "Memverifikasi akun..." yang dulunya teks statis kini digantikan oleh *loading popup* SweetAlert2 yang menahan klik pengguna di luar area.
+  - Pesan penolakan masuk (seperti email tidak berwenang/sesi kedaluwarsa) sekarang ditampilkan melalui _modal error_ SweetAlert2 yang besar dan jelas di tengah layar alih-alih peringatan kecil (_toast_).

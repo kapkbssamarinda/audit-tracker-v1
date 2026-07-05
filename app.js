@@ -157,15 +157,28 @@ function gisLoaded() {
 }
 
 async function onGoogleCredential(resp) {
-  $('#login-status').textContent = 'Memverifikasi akun...';
+  $('#login-status').textContent = '';
+  Swal.fire({
+    title: 'Memverifikasi akun...',
+    text: 'Mohon tunggu sebentar.',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
   try {
     const data = await api('login', { credential: resp.credential });
     session = data;
     persistSession();
+    Swal.close();
     showApp();
   } catch (err) {
-    $('#login-status').textContent = '';
-    toast(err.message);
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal Masuk',
+      text: err.message,
+      confirmButtonColor: '#012e7c'
+    });
   }
 }
 
