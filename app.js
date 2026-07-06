@@ -13,24 +13,24 @@ const GDRIVE_LOCAL_ROOT = "G:/Shared drives/KAP KBSS/Kantor Akuntan Publik Zaida
 const TASK_FOLDER_MAP = {
   // Planning
   "Analisa Terima Lanjut": "(1) Planning/00. Analisa Terima Lanjut",
-  "Evaluasi PMPJ": "(1) Planning/01. Evaluasi PMPJ",
-  "Prosedur Analitis Awal dan Audit Strategi Memorandum": "(1) Planning/02. Prosedur Analitis & ASM",
+  "Evaluasi PMPJ": "(1) Planning/A100. Evaluasi PMPJ",
+  "Prosedur Analitis Awal dan Audit Strategi Memorandum": "(1) Planning/A220. Prosedur Analitis Awal dan Audit Strategi Memorandum",
   // Execution
-  "Kas dan Setara Kas": "(2) Execution/01. Kas dan Setara Kas",
-  "Piutang": "(2) Execution/02. Piutang",
-  "Persediaan": "(2) Execution/03. Persediaan",
-  "Uang Muka": "(2) Execution/04. Uang Muka",
-  "Aset Tidak Lancar": "(2) Execution/05. Aset Tidak Lancar",
-  "Perpajakan": "(2) Execution/06. Perpajakan",
-  "Liabilitas Lancar": "(2) Execution/07. Liabilitas Lancar",
-  "Liabilitas Jangka Panjang": "(2) Execution/08. Liabilitas Jangka Panjang",
-  "Ekuitas": "(2) Execution/09. Ekuitas",
-  "Pendapatan": "(2) Execution/10. Pendapatan",
-  "Beban": "(2) Execution/11. Beban",
-  "Audit Memorandum": "(2) Execution/12. Audit Memorandum",
-  "Going Concern": "(2) Execution/13. Going Concern",
+  "Kas dan Setara Kas": "(2) Execution/A. Kas dan Setara Kas",
+  "Piutang": "(2) Execution/B. Piutang",
+  "Persediaan": "(2) Execution/C. Persediaan",
+  "Uang Muka": "(2) Execution/D. Uang Muka",
+  "Aset Tidak Lancar": "(2) Execution/E. Aset Tidak Lancar",
+  "Perpajakan": "(2) Execution/F. Perpajakan",
+  "Liabilitas Lancar": "(2) Execution/G. Liabilitas Lancar",
+  "Liabilitas Jangka Panjang": "(2) Execution/H. Liabilitas Jangka Panjang",
+  "Ekuitas": "(2) Execution/I. Ekuitas",
+  "Pendapatan": "(2) Execution/J. Pendapatan",
+  "Beban": "(2) Execution/K. Beban",
+  "Audit Memorandum": "(2) Execution/L. Audit Memorandum",
+  "Going Concern": "(2) Execution/M. Going Concern",
   // Reporting
-  "Draft Laporan": "(3) Reporting/Draft Laporan"
+  "Draft Laporan": "(3) Reporting"
 };
 
 // ---------- State ----------
