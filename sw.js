@@ -3,7 +3,7 @@
  * Naikkan CACHE_VERSION setiap kali merilis perubahan file statis.
  * ================================================================ */
 
-const CACHE_VERSION = 'kbs-v5';
+const CACHE_VERSION = 'kbs-v6';
 const PRECACHE = [
   './',
   'index.html',
