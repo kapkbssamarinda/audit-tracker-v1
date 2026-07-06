@@ -12,25 +12,25 @@ const GDRIVE_LOCAL_ROOT = "G:/Shared drives/KAP KBSS/Kantor Akuntan Publik Zaida
 // Pemetaan 17 Task Standar ke sub-folder di dalam template kertas kerja
 const TASK_FOLDER_MAP = {
   // Planning
-  "Analisa Terima Lanjut": "01. Planning/01. Analisa Terima Lanjut",
-  "Evaluasi PMPJ": "01. Planning/02. Evaluasi PMPJ",
-  "Prosedur Analitis Awal dan Audit Strategi Memorandum": "01. Planning/03. Prosedur Analitis & ASM",
+  "Analisa Terima Lanjut": "(1) Planning/00. Analisa Terima Lanjut",
+  "Evaluasi PMPJ": "(1) Planning/01. Evaluasi PMPJ",
+  "Prosedur Analitis Awal dan Audit Strategi Memorandum": "(1) Planning/02. Prosedur Analitis & ASM",
   // Execution
-  "Kas dan Setara Kas": "02. Execution/01. Kas dan Setara Kas",
-  "Piutang": "02. Execution/02. Piutang",
-  "Persediaan": "02. Execution/03. Persediaan",
-  "Uang Muka": "02. Execution/04. Uang Muka",
-  "Aset Tidak Lancar": "02. Execution/05. Aset Tidak Lancar",
-  "Perpajakan": "02. Execution/06. Perpajakan",
-  "Liabilitas Lancar": "02. Execution/07. Liabilitas Lancar",
-  "Liabilitas Jangka Panjang": "02. Execution/08. Liabilitas Jangka Panjang",
-  "Ekuitas": "02. Execution/09. Ekuitas",
-  "Pendapatan": "02. Execution/10. Pendapatan",
-  "Beban": "02. Execution/11. Beban",
-  "Audit Memorandum": "02. Execution/12. Audit Memorandum",
-  "Going Concern": "02. Execution/13. Going Concern",
+  "Kas dan Setara Kas": "(2) Execution/01. Kas dan Setara Kas",
+  "Piutang": "(2) Execution/02. Piutang",
+  "Persediaan": "(2) Execution/03. Persediaan",
+  "Uang Muka": "(2) Execution/04. Uang Muka",
+  "Aset Tidak Lancar": "(2) Execution/05. Aset Tidak Lancar",
+  "Perpajakan": "(2) Execution/06. Perpajakan",
+  "Liabilitas Lancar": "(2) Execution/07. Liabilitas Lancar",
+  "Liabilitas Jangka Panjang": "(2) Execution/08. Liabilitas Jangka Panjang",
+  "Ekuitas": "(2) Execution/09. Ekuitas",
+  "Pendapatan": "(2) Execution/10. Pendapatan",
+  "Beban": "(2) Execution/11. Beban",
+  "Audit Memorandum": "(2) Execution/12. Audit Memorandum",
+  "Going Concern": "(2) Execution/13. Going Concern",
   // Reporting
-  "Draft Laporan": "03. Reporting/Draft Laporan"
+  "Draft Laporan": "(3) Reporting/Draft Laporan"
 };
 
 // ---------- State ----------
