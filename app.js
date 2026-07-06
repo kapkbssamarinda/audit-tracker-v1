@@ -63,7 +63,8 @@ function getTaskDriveLink(task) {
   } else {
     // Desktop: panggil Custom URI Protocol untuk membuka Windows Explorer lokal
     const fullPath = `${GDRIVE_LOCAL_ROOT}/${cl.Tahun_Buku}/${namaFolderKlien}/${subFolder}`;
-    return `gdrive://${fullPath}`;
+    const encodedPath = fullPath.split('/').map(encodeURIComponent).join('/');
+    return `gdrive:${encodedPath}`;
   }
 }
 

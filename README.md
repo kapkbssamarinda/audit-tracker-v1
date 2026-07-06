@@ -47,6 +47,10 @@ Karena aplikasi ini berupa Vanilla Web App (HTML/CSS/JS), maka tidak ada proses 
 1. Modifikasi file `index.html`, `app.js`, atau `style.css` menggunakan code editor Anda.
 2. Gunakan ekstensi seperti *Live Server* (di VSCode) atau jalankan *local server* (seperti `npx serve`) di folder proyek untuk mengujinya secara lokal.
 3. Pastikan konfigurasi `GAS_URL` dan `GOOGLE_CLIENT_ID` di file `app.js` (baris teratas) sesuai dengan *environment* Anda.
+4. **Setup Custom Protocol Google Drive (Windows Only):** Agar tombol "Buka Folder" berfungsi di Windows Explorer, pastikan Anda:
+   - Membuat folder `C:\Tools\GdriveHandler\` di laptop Anda.
+   - Menyalin file `gdrive_handler.ps1` ke dalam folder tersebut.
+   - Mengeksekusi (double-click) file `setup-drive-protocol.reg` untuk mendaftarkan protocol handler ke Registry Windows. (Harus di-import ulang jika sebelumnya pernah meng-install versi lama).
 
 ### Catatan Pendeployan
 Proyek ini dikonfigurasi untuk disebarkan secara otomatis ke GitHub Pages menggunakan GitHub Actions (sesuai referensi di `jobs.json`). Push ke branch `main` akan men-trigger proses deploy.
