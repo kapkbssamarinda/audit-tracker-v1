@@ -52,7 +52,7 @@ function getTaskDriveLink(task) {
   if (!currentTaskData || !currentTaskData.client) return '#';
   
   const cl = currentTaskData.client;
-  const namaFolderKlien = `${cl.Tahun_Buku} - ${cl.Nama_Perusahaan}`;
+  const namaFolderKlien = cl.Nama_Perusahaan; // Hanya nama perusahaan tanpa prefix tahun
   const subFolder = TASK_FOLDER_MAP[task.Nama_Pekerjaan] || "";
 
   const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
