@@ -6,6 +6,33 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbz2F8HMgvLfFbttjtcc4x1KOoxfsbtavBj_NV2JQXKBdbv5W2Etzut4EgLD_ezYBAtVBw/exec'; // https://script.google.com/macros/s/.../exec
 const GOOGLE_CLIENT_ID = '331125203639-vatl2f5456jq27i86hctknpjvnscltmi.apps.googleusercontent.com';
 
+// Konfigurasi Root Drive Lokal untuk Windows Explorer (Google Drive Desktop)
+const GDRIVE_LOCAL_ROOT = "G:/Shared drives/KAP KBSS/Kantor Akuntan Publik Zaidan Jauhari/Audit/KAP Kuncara Budi Santosa Cab. Samarinda";
+
+// Pemetaan 17 Task Standar ke sub-folder di dalam template kertas kerja
+const TASK_FOLDER_MAP = {
+  // Planning
+  "Analisa Terima Lanjut": "01. Planning/01. Analisa Terima Lanjut",
+  "Evaluasi PMPJ": "01. Planning/02. Evaluasi PMPJ",
+  "Prosedur Analitis Awal dan Audit Strategi Memorandum": "01. Planning/03. Prosedur Analitis & ASM",
+  // Execution
+  "Kas dan Setara Kas": "02. Execution/01. Kas dan Setara Kas",
+  "Piutang": "02. Execution/02. Piutang",
+  "Persediaan": "02. Execution/03. Persediaan",
+  "Uang Muka": "02. Execution/04. Uang Muka",
+  "Aset Tidak Lancar": "02. Execution/05. Aset Tidak Lancar",
+  "Perpajakan": "02. Execution/06. Perpajakan",
+  "Liabilitas Lancar": "02. Execution/07. Liabilitas Lancar",
+  "Liabilitas Jangka Panjang": "02. Execution/08. Liabilitas Jangka Panjang",
+  "Ekuitas": "02. Execution/09. Ekuitas",
+  "Pendapatan": "02. Execution/10. Pendapatan",
+  "Beban": "02. Execution/11. Beban",
+  "Audit Memorandum": "02. Execution/12. Audit Memorandum",
+  "Going Concern": "02. Execution/13. Going Concern",
+  // Reporting
+  "Draft Laporan": "03. Reporting/Draft Laporan"
+};
+
 // ---------- State ----------
 const SESSION_TTL_MS = 15 * 60 * 1000; // sesi lokal berlaku 15 menit sejak aktivitas terakhir
 
@@ -19,6 +46,27 @@ let usersCache = null;       // hasil adminListUsers untuk modal tim
 let clientsCache = null;     // hasil getClients untuk modal edit
 
 // ---------- Util ----------
+
+/** Menghasilkan link gdrive:// untuk Desktop Explorer atau URL Web untuk Mobile PWA */
+function getTaskDriveLink(task) {
+  if (!currentTaskData || !currentTaskData.client) return '#';
+  
+  const cl = currentTaskData.client;
+  const namaFolderKlien = `${cl.Tahun_Buku} - ${cl.Nama_Perusahaan}`;
+  const subFolder = TASK_FOLDER_MAP[task.Nama_Pekerjaan] || "";
+
+  const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    // Mobile: buka Drive URL dari database atau fallback ke pencarian Drive web
+    return cl.Drive_URL || `https://drive.google.com/drive/search?q=${encodeURIComponent(task.Nama_Pekerjaan)}`;
+  } else {
+    // Desktop: panggil Custom URI Protocol untuk membuka Windows Explorer lokal
+    const fullPath = `${GDRIVE_LOCAL_ROOT}/${cl.Tahun_Buku}/${namaFolderKlien}/${subFolder}`;
+    return `gdrive://${fullPath}`;
+  }
+}
+
 const $ = (sel) => document.querySelector(sel);
 
 function esc(s) {
@@ -379,11 +427,25 @@ function taskRow(t) {
   const catatan = t.Catatan
     ? `<div class="small text-danger mt-1"><i class="bi bi-chat-left-text"></i> ${esc(t.Catatan)}</div>`
     : '';
+
+  // Generator tombol folder explorer / drive
+  const driveLink = getTaskDriveLink(t);
+  const btnFolder = `
+    <a href="${driveLink}" class="btn btn-sm btn-outline-primary py-0 px-2 ms-2 d-inline-flex align-items-center" 
+       title="Buka folder kertas kerja di laptop/HP" 
+       style="font-size: 0.75rem; border-radius: 4px;">
+      <i class="bi bi-folder me-1"></i>Folder
+    </a>`;
+
   return `
     <tr class="${final ? 'table-success-subtle task-final' : ''}">
       <td class="task-cell-name">
-        <div class="fw-medium">${esc(t.Nama_Pekerjaan)}
-          ${final ? ' <i class="bi bi-lock-fill text-success" title="Final — terkunci"></i>' : ''}
+        <div class="fw-medium d-flex align-items-center justify-content-between flex-wrap gap-1">
+          <div>
+            ${esc(t.Nama_Pekerjaan)}
+            ${final ? ' <i class="bi bi-lock-fill text-success" title="Final — terkunci"></i>' : ''}
+          </div>
+          ${btnFolder}
         </div>
         ${catatan}
       </td>

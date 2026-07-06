@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\gdrive]
+@="URL:KAP KBS Google Drive Protocol"
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\gdrive\shell]
+
+[HKEY_CLASSES_ROOT\gdrive\shell\open]
+
+[HKEY_CLASSES_ROOT\gdrive\shell\open\command]
+@="powershell.exe -windowstyle hidden -Command \"$url = '%1'; $path = [uri]::UnescapeDataString($url -replace '^gdrive://', '') -replace '/', '\\'; if (Test-Path $path) { explorer.exe $path } else { [System.Windows.Forms.MessageBox]::Show('Folder belum tersedia di laptop ini atau Google Drive Desktop belum selesai sinkronisasi.', 'Audit Tracker KBS', 'OK', 'Warning') }\""
