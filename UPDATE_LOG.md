@@ -40,3 +40,7 @@ Dokumen ini berisi daftar masalah yang telah diperbaiki pada proyek **Audit Trac
 - **Implementasi SweetAlert2 pada Alur Login:**
   - Layar "Memverifikasi akun..." yang dulunya teks statis kini digantikan oleh *loading popup* SweetAlert2 yang menahan klik pengguna di luar area.
   - Pesan penolakan masuk (seperti email tidak berwenang/sesi kedaluwarsa) sekarang ditampilkan melalui _modal error_ SweetAlert2 yang besar dan jelas di tengah layar alih-alih peringatan kecil (_toast_).
+- **Refaktor Tombol Folder (Penyederhanaan UI):**
+  - **Penghapusan Tombol Repetitif:** Menghapus tombol "Folder" yang sebelumnya muncul berulang kali di setiap baris dari 17 tugas.
+  - **4 Tombol Utama:** Menyederhanakan akses Google Drive dengan hanya menyediakan 4 tombol utama: (1) Folder Klien (di sebelah nama klien), (2) Folder Planning, (3) Folder Execution, dan (4) Folder Reporting yang menempel rapi pada judul (*header*) masing-masing tabel tahapan.
+  - **Visualisasi Menonjol:** Tombol folder di-desain ulang menggunakan bentuk elips (*rounded-pill*), warna solid (`btn-primary`), dan ditambahkan ikon link eksternal (`bi-box-arrow-up-right`) agar fungsinya lebih jelas bagi pengguna.
