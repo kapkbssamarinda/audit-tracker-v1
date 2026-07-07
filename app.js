@@ -311,20 +311,9 @@ async function renderClientList() {
     return;
   }
 
-  const uniqueTeams = [...new Set(clients.map(cl => cl.Nama_Tim).filter(t => t && t !== '-'))].sort();
-  const teamOptions = uniqueTeams.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
-  
-  const filterHtml = isManager ? `
-    <div class="row g-2 mb-3">
-      <div class="col-12 col-md-6">
-        <input type="text" id="search-client" class="form-control" placeholder="Cari nama klien atau tahun..." onkeyup="filterClients()">
-      </div>
-      <div class="col-12 col-md-6">
-        <select id="filter-team" class="form-select" onchange="filterClients()">
-           <option value="">Semua Tim</option>
-           ${teamOptions}
-        </select>
-      </div>
+  const searchHtml = isManager ? `
+    <div class="mb-4">
+      <input type="text" id="search-client" class="form-control" placeholder="Cari nama klien atau tahun buku..." onkeyup="filterClients()">
     </div>
   ` : '';
 
@@ -332,21 +321,50 @@ async function renderClientList() {
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h5 class="mb-0">Daftar Klien</h5>${addBtn}
     </div>
-    ${filterHtml}
-    <div class="row g-3" id="client-cards-container">
-      ${clients.map(cl => clientCard(cl)).join('')}
+    ${searchHtml}
+    <div id="client-cards-container">
+      ${renderGroupedClients(clients, false, isManager)}
     </div>`;
+}
+
+function renderGroupedClients(clientsArray, isDashboard, useGrouping) {
+  if (!clientsArray.length) return '<div class="alert alert-secondary">Tidak ada klien yang cocok.</div>';
+  
+  if (!useGrouping) {
+    return `<div class="row g-3">${clientsArray.map(cl => isDashboard ? dashboardCard(cl) : clientCard(cl)).join('')}</div>`;
+  }
+
+  const groups = {};
+  clientsArray.forEach(cl => {
+    const teamName = (cl.Nama_Tim && cl.Nama_Tim !== '-') ? cl.Nama_Tim : 'Belum Dialokasikan';
+    const ketuaName = (cl.Nama_Ketua && cl.Nama_Ketua !== '-') ? cl.Nama_Ketua : '-';
+    if (!groups[teamName]) groups[teamName] = { ketua: ketuaName, clients: [] };
+    groups[teamName].clients.push(cl);
+  });
+
+  const sortedTeams = Object.keys(groups).sort();
+  return sortedTeams.map(team => {
+    const group = groups[team];
+    const ketuaInfo = group.ketua !== '-' ? ` <span class="text-muted fs-6 fw-normal">(Ketua: ${esc(group.ketua)})</span>` : '';
+    return `
+      <div class="mt-4 mb-3 border-bottom pb-2 d-flex align-items-center">
+        <i class="bi bi-people-fill text-primary me-2 fs-5"></i>
+        <h5 class="mb-0 text-primary fw-bold">${esc(team)}${ketuaInfo}</h5>
+        <span class="badge bg-secondary ms-2">${group.clients.length} Klien</span>
+      </div>
+      <div class="row g-3 mb-4">
+        ${group.clients.map(cl => isDashboard ? dashboardCard(cl) : clientCard(cl)).join('')}
+      </div>
+    `;
+  }).join('');
 }
 
 window.filterClients = function() {
   const q = ($('#search-client').value || '').toLowerCase();
-  const t = $('#filter-team').value;
   const filtered = (clientsCache || []).filter(cl => {
-    const matchQ = cl.Nama_Perusahaan.toLowerCase().includes(q) || String(cl.Tahun_Buku).includes(q);
-    const matchT = t === '' || cl.Nama_Tim === t;
-    return matchQ && matchT;
+    return cl.Nama_Perusahaan.toLowerCase().includes(q) || String(cl.Tahun_Buku).includes(q);
   });
-  $('#client-cards-container').innerHTML = filtered.map(cl => clientCard(cl)).join('');
+  $('#client-cards-container').innerHTML = renderGroupedClients(filtered, false, session.role === 'Manager');
 };
 
 function clientCard(cl) {
@@ -360,11 +378,9 @@ function clientCard(cl) {
       <i class="bi bi-trash"></i></button>` : '';
   const statusColor = { 'Aktif': 'success', 'Selesai': 'info text-dark', 'Nonaktif': 'secondary' }[cl.Status_Klien] || 'secondary';
 
-  const isManager = session.role === 'Manager';
-  const teamInfo = (isManager && cl.Nama_Tim && cl.Nama_Tim !== '-') ? `
-    <div class="small text-primary mb-2 mt-2">
-      <i class="bi bi-people-fill me-1"></i> Tim: <strong>${esc(cl.Nama_Tim)}</strong> <span class="text-muted">(Ketua: ${esc(cl.Nama_Ketua)})</span>
-    </div>` : '';
+  // Info tim tidak ditampilkan di dalam card jika sudah dikelompokkan oleh header grup.
+  // Tapi untuk Anggota/Ketua, card tidak digrup jadi info tim boleh ditampilkan jika dibutuhkan.
+  // Karena mereka hanya memegang timnya sendiri, lebih baik ditiadakan agar card lebih bersih.
 
   return `
   <div class="col-12 col-md-6 col-xl-4">
@@ -377,7 +393,6 @@ function clientCard(cl) {
           </div>
           <span class="badge bg-${statusColor}">${esc(cl.Status_Klien)}</span>
         </div>
-        ${teamInfo}
         <div class="progress my-3" style="height:10px">
           <div class="progress-bar bg-success" style="width:${st.persen}%"></div>
         </div>
@@ -642,50 +657,32 @@ async function renderDashboard() {
     c.innerHTML = '<div class="alert alert-secondary">Belum ada klien.</div>';
     return;
   }
-
-  const uniqueTeams = [...new Set(clients.map(cl => cl.Nama_Tim).filter(t => t && t !== '-'))].sort();
-  const teamOptions = uniqueTeams.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
   
-  const filterHtml = `
-    <div class="row g-2 mb-3">
-      <div class="col-12 col-md-6">
-        <input type="text" id="search-dashboard" class="form-control" placeholder="Cari nama klien atau tahun..." onkeyup="filterDashboard()">
-      </div>
-      <div class="col-12 col-md-6">
-        <select id="filter-dashboard-team" class="form-select" onchange="filterDashboard()">
-           <option value="">Semua Tim</option>
-           ${teamOptions}
-        </select>
-      </div>
+  const searchHtml = `
+    <div class="mb-4">
+      <input type="text" id="search-dashboard" class="form-control" placeholder="Cari nama klien atau tahun buku..." onkeyup="filterDashboard()">
     </div>
   `;
 
   c.innerHTML = `
     <h5 class="mb-3">Dashboard Progres Audit</h5>
-    ${filterHtml}
-    <div class="row g-3" id="dashboard-cards-container">
-      ${clients.map(cl => dashboardCard(cl)).join('')}
+    ${searchHtml}
+    <div id="dashboard-cards-container">
+      ${renderGroupedClients(clients, true, true)}
     </div>`;
 }
 
 window.filterDashboard = function() {
   const q = ($('#search-dashboard').value || '').toLowerCase();
-  const t = $('#filter-dashboard-team').value;
   const filtered = (dashboardCache || []).filter(cl => {
-    const matchQ = cl.Nama_Perusahaan.toLowerCase().includes(q) || String(cl.Tahun_Buku).includes(q);
-    const matchT = t === '' || cl.Nama_Tim === t;
-    return matchQ && matchT;
+    return cl.Nama_Perusahaan.toLowerCase().includes(q) || String(cl.Tahun_Buku).includes(q);
   });
-  $('#dashboard-cards-container').innerHTML = filtered.map(cl => dashboardCard(cl)).join('');
+  $('#dashboard-cards-container').innerHTML = renderGroupedClients(filtered, true, true);
 };
 
 function dashboardCard(cl) {
   const st = cl.stats;
-  const teamInfo = (cl.Nama_Tim && cl.Nama_Tim !== '-') ? `
-    <div class="small text-primary mb-2 mt-2">
-      <i class="bi bi-people-fill me-1"></i> Tim: <strong>${esc(cl.Nama_Tim)}</strong> <span class="text-muted">(Ketua: ${esc(cl.Nama_Ketua)})</span>
-    </div>` : '';
-
+  
   return `
   <div class="col-12 col-md-6 col-xl-4">
     <div class="card h-100 shadow-sm">
@@ -696,7 +693,6 @@ function dashboardCard(cl) {
             <span class="badge bg-secondary">${esc(cl.Tahun_Buku)}</span>
           </div>
         </div>
-        ${teamInfo}
         <div class="progress my-3" style="height:14px">
           <div class="progress-bar bg-success" style="width:${st.persen}%">${st.persen}%</div>
         </div>
