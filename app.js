@@ -399,14 +399,15 @@ async function renderTasks(clientId) {
     </div>
     ${Object.keys(grouped).map(tahapan => grouped[tahapan].length ? `
       <div class="card shadow-sm mb-3">
-        <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-          <div>
-            <i class="bi bi-folder2-open me-1 text-primary"></i>${esc(tahapan)}
-            <span class="badge bg-secondary ms-1">${grouped[tahapan].length}</span>
+        <div class="card-header bg-white fw-semibold d-flex align-items-center flex-wrap gap-2 py-2">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-folder2-open me-2 text-primary"></i>
+            <span class="fs-6 me-2">${esc(tahapan)}</span>
+            <a href="${getDriveLink(tahapan)}" class="btn btn-primary py-1 px-3 d-inline-flex align-items-center rounded-pill shadow-sm" title="Buka Folder ${esc(tahapan)}" style="font-size: 0.75rem; letter-spacing: 0.3px;">
+              <i class="bi bi-box-arrow-up-right me-1"></i> Buka Folder
+            </a>
           </div>
-          <a href="${getDriveLink(tahapan)}" class="btn btn-sm btn-outline-primary py-0 px-2 d-inline-flex align-items-center" title="Buka Folder ${esc(tahapan)}" style="font-size: 0.75rem; border-radius: 4px;">
-            <i class="bi bi-folder me-1"></i>Folder ${esc(tahapan)}
-          </a>
+          <span class="badge bg-secondary ms-auto">${grouped[tahapan].length} Task</span>
         </div>
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 task-table">
