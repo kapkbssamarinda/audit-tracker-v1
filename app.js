@@ -48,21 +48,25 @@ let clientsCache = null;     // hasil getClients untuk modal edit
 // ---------- Util ----------
 
 /** Menghasilkan link gdrive:// untuk Desktop Explorer atau URL Web untuk Mobile PWA */
-function getTaskDriveLink(task) {
+function getDriveLink(type) {
   if (!currentTaskData || !currentTaskData.client) return '#';
   
   const cl = currentTaskData.client;
-  const namaFolderKlien = cl.Nama_Perusahaan; // Hanya nama perusahaan tanpa prefix tahun
-  const subFolder = TASK_FOLDER_MAP[task.Nama_Pekerjaan] || "";
+  const namaFolderKlien = cl.Nama_Perusahaan;
+  
+  let subFolder = "";
+  if (type === 'Planning') subFolder = "(1) Planning";
+  else if (type === 'Execution') subFolder = "(2) Execution";
+  else if (type === 'Reporting') subFolder = "(3) Reporting";
 
   const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
   
   if (isMobile) {
-    // Mobile: buka Drive URL dari database atau fallback ke pencarian Drive web
-    return cl.Drive_URL || `https://drive.google.com/drive/search?q=${encodeURIComponent(task.Nama_Pekerjaan)}`;
+    return cl.Drive_URL || `https://drive.google.com/drive/search?q=${encodeURIComponent(namaFolderKlien + ' ' + subFolder)}`;
   } else {
-    // Desktop: panggil Custom URI Protocol untuk membuka Windows Explorer lokal
-    const fullPath = `${GDRIVE_LOCAL_ROOT}/${cl.Tahun_Buku}/${namaFolderKlien}/${subFolder}`;
+    const fullPath = subFolder 
+      ? `${GDRIVE_LOCAL_ROOT}/${cl.Tahun_Buku}/${namaFolderKlien}/${subFolder}`
+      : `${GDRIVE_LOCAL_ROOT}/${cl.Tahun_Buku}/${namaFolderKlien}`;
     const encodedPath = fullPath.split('/').map(encodeURIComponent).join('/');
     return `gdrive:${encodedPath}`;
   }
@@ -378,7 +382,12 @@ async function renderTasks(clientId) {
     </button>
     <div class="d-flex flex-wrap justify-content-between align-items-end mb-3 gap-2">
       <div>
-        <h5 class="mb-0">${esc(data.client.Nama_Perusahaan)}</h5>
+        <h5 class="mb-0 d-flex align-items-center gap-2">
+          ${esc(data.client.Nama_Perusahaan)}
+          <a href="${getDriveLink('Root')}" class="btn btn-sm btn-outline-primary py-0 px-2 d-inline-flex align-items-center" title="Buka Root Folder Klien" style="font-size: 0.75rem; border-radius: 4px;">
+            <i class="bi bi-folder me-1"></i>Folder Klien
+          </a>
+        </h5>
         <small class="text-muted">
           Tahun Buku ${esc(data.client.Tahun_Buku)} ·
           Peran Anda: <strong>${esc(data.clientRole)}</strong>
@@ -390,9 +399,14 @@ async function renderTasks(clientId) {
     </div>
     ${Object.keys(grouped).map(tahapan => grouped[tahapan].length ? `
       <div class="card shadow-sm mb-3">
-        <div class="card-header bg-white fw-semibold">
-          <i class="bi bi-folder2-open me-1 text-primary"></i>${esc(tahapan)}
-          <span class="badge bg-secondary ms-1">${grouped[tahapan].length}</span>
+        <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+          <div>
+            <i class="bi bi-folder2-open me-1 text-primary"></i>${esc(tahapan)}
+            <span class="badge bg-secondary ms-1">${grouped[tahapan].length}</span>
+          </div>
+          <a href="${getDriveLink(tahapan)}" class="btn btn-sm btn-outline-primary py-0 px-2 d-inline-flex align-items-center" title="Buka Folder ${esc(tahapan)}" style="font-size: 0.75rem; border-radius: 4px;">
+            <i class="bi bi-folder me-1"></i>Folder ${esc(tahapan)}
+          </a>
         </div>
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 task-table">
@@ -429,15 +443,6 @@ function taskRow(t) {
     ? `<div class="small text-danger mt-1"><i class="bi bi-chat-left-text"></i> ${esc(t.Catatan)}</div>`
     : '';
 
-  // Generator tombol folder explorer / drive
-  const driveLink = getTaskDriveLink(t);
-  const btnFolder = `
-    <a href="${driveLink}" class="btn btn-sm btn-outline-primary py-0 px-2 ms-2 d-inline-flex align-items-center" 
-       title="Buka folder kertas kerja di laptop/HP" 
-       style="font-size: 0.75rem; border-radius: 4px;">
-      <i class="bi bi-folder me-1"></i>Folder
-    </a>`;
-
   return `
     <tr class="${final ? 'table-success-subtle task-final' : ''}">
       <td class="task-cell-name">
@@ -446,7 +451,6 @@ function taskRow(t) {
             ${esc(t.Nama_Pekerjaan)}
             ${final ? ' <i class="bi bi-lock-fill text-success" title="Final — terkunci"></i>' : ''}
           </div>
-          ${btnFolder}
         </div>
         ${catatan}
       </td>
