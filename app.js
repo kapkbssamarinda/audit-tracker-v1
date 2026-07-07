@@ -289,7 +289,6 @@ function openTab(tab) {
   if (tab === 'logs') return renderLogs();
 }
 
-// ---------- View: daftar klien ----------
 async function renderClientList() {
   const c = $('#main-content');
   c.innerHTML = spinner('Memuat daftar klien...');
@@ -299,7 +298,8 @@ async function renderClientList() {
     clientsCache = clients;
   } catch (err) { c.innerHTML = errorBox(err.message); return; }
 
-  const addBtn = session.role === 'Manager'
+  const isManager = session.role === 'Manager';
+  const addBtn = isManager
     ? `<button class="btn btn-primary btn-sm" onclick="openClientModal()">
          <i class="bi bi-plus-lg"></i> Tambah Klien</button>`
     : '';
@@ -311,14 +311,43 @@ async function renderClientList() {
     return;
   }
 
+  const uniqueTeams = [...new Set(clients.map(cl => cl.Nama_Tim).filter(t => t && t !== '-'))].sort();
+  const teamOptions = uniqueTeams.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  
+  const filterHtml = isManager ? `
+    <div class="row g-2 mb-3">
+      <div class="col-12 col-md-6">
+        <input type="text" id="search-client" class="form-control" placeholder="Cari nama klien atau tahun..." onkeyup="filterClients()">
+      </div>
+      <div class="col-12 col-md-6">
+        <select id="filter-team" class="form-select" onchange="filterClients()">
+           <option value="">Semua Tim</option>
+           ${teamOptions}
+        </select>
+      </div>
+    </div>
+  ` : '';
+
   c.innerHTML = `
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h5 class="mb-0">Daftar Klien</h5>${addBtn}
     </div>
-    <div class="row g-3">
+    ${filterHtml}
+    <div class="row g-3" id="client-cards-container">
       ${clients.map(cl => clientCard(cl)).join('')}
     </div>`;
 }
+
+window.filterClients = function() {
+  const q = ($('#search-client').value || '').toLowerCase();
+  const t = $('#filter-team').value;
+  const filtered = (clientsCache || []).filter(cl => {
+    const matchQ = cl.Nama_Perusahaan.toLowerCase().includes(q) || String(cl.Tahun_Buku).includes(q);
+    const matchT = t === '' || cl.Nama_Tim === t;
+    return matchQ && matchT;
+  });
+  $('#client-cards-container').innerHTML = filtered.map(cl => clientCard(cl)).join('');
+};
 
 function clientCard(cl) {
   const st = cl.stats;
@@ -331,6 +360,12 @@ function clientCard(cl) {
       <i class="bi bi-trash"></i></button>` : '';
   const statusColor = { 'Aktif': 'success', 'Selesai': 'info text-dark', 'Nonaktif': 'secondary' }[cl.Status_Klien] || 'secondary';
 
+  const isManager = session.role === 'Manager';
+  const teamInfo = (isManager && cl.Nama_Tim && cl.Nama_Tim !== '-') ? `
+    <div class="small text-primary mb-2 mt-2">
+      <i class="bi bi-people-fill me-1"></i> Tim: <strong>${esc(cl.Nama_Tim)}</strong> <span class="text-muted">(Ketua: ${esc(cl.Nama_Ketua)})</span>
+    </div>` : '';
+
   return `
   <div class="col-12 col-md-6 col-xl-4">
     <div class="card h-100 shadow-sm client-card">
@@ -342,6 +377,7 @@ function clientCard(cl) {
           </div>
           <span class="badge bg-${statusColor}">${esc(cl.Status_Klien)}</span>
         </div>
+        ${teamInfo}
         <div class="progress my-3" style="height:10px">
           <div class="progress-bar bg-success" style="width:${st.persen}%"></div>
         </div>
@@ -591,13 +627,15 @@ function openAssign(taskId, currentEmail, taskName, tahapan) {
   bootstrap.Modal.getOrCreateInstance($('#modal-assign')).show();
 }
 
-// ---------- View: dashboard (Partner/Admin) ----------
+let dashboardCache = null;
+
 async function renderDashboard() {
   const c = $('#main-content');
   c.innerHTML = spinner('Memuat dashboard...');
   let clients;
   try {
     clients = await api('getDashboard');
+    dashboardCache = clients;
   } catch (err) { c.innerHTML = errorBox(err.message); return; }
 
   if (!clients.length) {
@@ -605,39 +643,78 @@ async function renderDashboard() {
     return;
   }
 
+  const uniqueTeams = [...new Set(clients.map(cl => cl.Nama_Tim).filter(t => t && t !== '-'))].sort();
+  const teamOptions = uniqueTeams.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  
+  const filterHtml = `
+    <div class="row g-2 mb-3">
+      <div class="col-12 col-md-6">
+        <input type="text" id="search-dashboard" class="form-control" placeholder="Cari nama klien atau tahun..." onkeyup="filterDashboard()">
+      </div>
+      <div class="col-12 col-md-6">
+        <select id="filter-dashboard-team" class="form-select" onchange="filterDashboard()">
+           <option value="">Semua Tim</option>
+           ${teamOptions}
+        </select>
+      </div>
+    </div>
+  `;
+
   c.innerHTML = `
     <h5 class="mb-3">Dashboard Progres Audit</h5>
-    <div class="row g-3">
-      ${clients.map(cl => {
-        const st = cl.stats;
-        return `
-        <div class="col-12 col-md-6 col-xl-4">
-          <div class="card h-100 shadow-sm">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <h6 class="mb-0">${esc(cl.Nama_Perusahaan)}</h6>
-                <span class="badge bg-secondary">${esc(cl.Tahun_Buku)}</span>
-              </div>
-              <div class="progress my-3" style="height:14px">
-                <div class="progress-bar bg-success" style="width:${st.persen}%">${st.persen}%</div>
-              </div>
-              <div class="small text-muted mb-2">
-                Final: <strong>${st.final}/${st.total}</strong>
-                · Selesai (menunggu review): ${st.selesai}
-                · Proses: ${st.proses} · Belum: ${st.belum}
-              </div>
-              <div class="d-flex gap-2 flex-wrap">
-                ${['Planning', 'Execution', 'Reporting'].map(th => {
-                  const p = st.perTahapan[th] || { total: 0, final: 0 };
-                  return `<span class="badge bg-light text-dark border">
-                    ${th}: ${p.final}/${p.total}</span>`;
-                }).join('')}
-              </div>
-            </div>
-          </div>
-        </div>`;
-      }).join('')}
+    ${filterHtml}
+    <div class="row g-3" id="dashboard-cards-container">
+      ${clients.map(cl => dashboardCard(cl)).join('')}
     </div>`;
+}
+
+window.filterDashboard = function() {
+  const q = ($('#search-dashboard').value || '').toLowerCase();
+  const t = $('#filter-dashboard-team').value;
+  const filtered = (dashboardCache || []).filter(cl => {
+    const matchQ = cl.Nama_Perusahaan.toLowerCase().includes(q) || String(cl.Tahun_Buku).includes(q);
+    const matchT = t === '' || cl.Nama_Tim === t;
+    return matchQ && matchT;
+  });
+  $('#dashboard-cards-container').innerHTML = filtered.map(cl => dashboardCard(cl)).join('');
+};
+
+function dashboardCard(cl) {
+  const st = cl.stats;
+  const teamInfo = (cl.Nama_Tim && cl.Nama_Tim !== '-') ? `
+    <div class="small text-primary mb-2 mt-2">
+      <i class="bi bi-people-fill me-1"></i> Tim: <strong>${esc(cl.Nama_Tim)}</strong> <span class="text-muted">(Ketua: ${esc(cl.Nama_Ketua)})</span>
+    </div>` : '';
+
+  return `
+  <div class="col-12 col-md-6 col-xl-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h6 class="mb-0">${esc(cl.Nama_Perusahaan)}</h6>
+            <span class="badge bg-secondary">${esc(cl.Tahun_Buku)}</span>
+          </div>
+        </div>
+        ${teamInfo}
+        <div class="progress my-3" style="height:14px">
+          <div class="progress-bar bg-success" style="width:${st.persen}%">${st.persen}%</div>
+        </div>
+        <div class="small text-muted mb-2">
+          Final: <strong>${st.final}/${st.total}</strong>
+          · Selesai (menunggu review): ${st.selesai}
+          · Proses: ${st.proses} · Belum: ${st.belum}
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          ${['Planning', 'Execution', 'Reporting'].map(th => {
+            const p = st.perTahapan[th] || { total: 0, final: 0 };
+            return `<span class="badge bg-light text-dark border">
+              ${th}: ${p.final}/${p.total}</span>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
 }
 
 // ---------- View: users (Admin) ----------
