@@ -102,11 +102,16 @@ async function withBusy(btn, fn) {
   try { await fn(); } finally { btn.disabled = false; btn.innerHTML = html; }
 }
 
-function spinner(text = 'Memuat...') {
-  return `<div class="text-center text-muted py-5">
-    <div class="spinner-border text-primary mb-2"></div>
-    <div>${esc(text)}</div>
-  </div>`;
+function loaderShow() {
+  const el = $('#page-loader');
+  el.classList.add('is-active');
+  el.setAttribute('aria-hidden', 'false');
+}
+
+function loaderHide() {
+  const el = $('#page-loader');
+  el.classList.remove('is-active');
+  el.setAttribute('aria-hidden', 'true');
 }
 
 function relativeTime(iso) {
@@ -291,12 +296,12 @@ function openTab(tab) {
 
 async function renderClientList() {
   const c = $('#main-content');
-  c.innerHTML = spinner('Memuat daftar klien...');
+  loaderShow();
   let clients;
   try {
     clients = await api('getClients');
     clientsCache = clients;
-  } catch (err) { c.innerHTML = errorBox(err.message); return; }
+  } catch (err) { c.innerHTML = errorBox(err.message); return; } finally { loaderHide(); }
 
   const isManager = session.role === 'Manager';
   const addBtn = isManager
@@ -417,11 +422,11 @@ function clientCard(cl) {
 async function renderTasks(clientId) {
   currentClientId = clientId;
   const c = $('#main-content');
-  c.innerHTML = spinner('Memuat task...');
+  loaderShow();
   let data;
   try {
     data = await api('getTasks', { clientId });
-  } catch (err) { c.innerHTML = errorBox(err.message); return; }
+  } catch (err) { c.innerHTML = errorBox(err.message); return; } finally { loaderHide(); }
   currentTaskData = data;
 
   const grouped = { Planning: [], Execution: [], Reporting: [] };
@@ -646,12 +651,12 @@ let dashboardCache = null;
 
 async function renderDashboard() {
   const c = $('#main-content');
-  c.innerHTML = spinner('Memuat dashboard...');
+  loaderShow();
   let clients;
   try {
     clients = await api('getDashboard');
     dashboardCache = clients;
-  } catch (err) { c.innerHTML = errorBox(err.message); return; }
+  } catch (err) { c.innerHTML = errorBox(err.message); return; } finally { loaderHide(); }
 
   if (!clients.length) {
     c.innerHTML = '<div class="alert alert-secondary">Belum ada klien.</div>';
@@ -716,11 +721,11 @@ function dashboardCard(cl) {
 // ---------- View: users (Admin) ----------
 async function renderUsers() {
   const c = $('#main-content');
-  c.innerHTML = spinner('Memuat users...');
+  loaderShow();
   let users;
   try {
     users = await api('adminListUsers');
-  } catch (err) { c.innerHTML = errorBox(err.message); return; }
+  } catch (err) { c.innerHTML = errorBox(err.message); return; } finally { loaderHide(); }
 
   c.innerHTML = `
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -777,12 +782,12 @@ async function deleteUser(email) {
 // ---------- View: tim (Admin) ----------
 async function renderTeams() {
   const c = $('#main-content');
-  c.innerHTML = spinner('Memuat tim...');
+  loaderShow();
   try {
     const [teams, users] = await Promise.all([api('getTeams'), api('adminListUsers')]);
     teamsCache = teams;
     usersCache = users;
-  } catch (err) { c.innerHTML = errorBox(err.message); return; }
+  } catch (err) { c.innerHTML = errorBox(err.message); return; } finally { loaderHide(); }
 
   const memberBadge = (m) => m.aktif
     ? `<span class="badge bg-light text-dark border me-1 mb-1">${esc(m.nama)}</span>`
@@ -911,11 +916,11 @@ async function deleteClient(idClient, nama) {
 // ---------- View: log aktivitas (Admin) ----------
 async function renderLogs() {
   const c = $('#main-content');
-  c.innerHTML = spinner('Memuat log...');
+  loaderShow();
   let logs;
   try {
     logs = await api('adminGetLogs');
-  } catch (err) { c.innerHTML = errorBox(err.message); return; }
+  } catch (err) { c.innerHTML = errorBox(err.message); return; } finally { loaderHide(); }
 
   c.innerHTML = `
     <h5 class="mb-3">Log Aktivitas <small class="text-muted fs-6">(200 terakhir)</small></h5>

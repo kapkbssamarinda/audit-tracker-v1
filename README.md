@@ -30,7 +30,6 @@ Aplikasi ini menggunakan pendekatan sederhana dan ringan (Vanilla stack) di bagi
 - `style.css` — Penyesuaian antarmuka, warna, dan perbaikan tampilan responsif.
 - `PRODUCT.md` — Spesifikasi produk, prinsip desain, persona merek, dan persyaratan aksesibilitas (WCAG).
 - `manifest.webmanifest` & `sw.js` — Konfigurasi PWA dan Service Worker untuk mendukung caching & instalasi aplikasi.
-- `package.json` — Konfigurasi dependensi node (hanya `@google/generative-ai` untuk keperluan utilitas tambahan jika ada).
 - `icons/` — Kumpulan ikon aplikasi untuk kebutuhan PWA.
 
 ## 🎨 Prinsip Desain
