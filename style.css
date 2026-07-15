@@ -20,7 +20,7 @@
   display: block;
   height: 100%;
   width: 35%;
-  background: var(--bs-primary);
+  background: var(--bs-warning); /* kontras terhadap navbar biru (--bs-primary) yang selalu ada di baris ini */
 }
 
 .page-loader.is-active {
